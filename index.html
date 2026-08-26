@@ -1,1 +1,1010 @@
+```html
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <title>Koło Fortuny</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(160deg, #fff4df, #ffd98a);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #2d210f;
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 500px;
+      padding: 20px 15px 30px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 5px 0;
+      font-size: 32px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      font-size: 15px;
+      opacity: .75;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: min(88vw, 400px);
+      height: min(88vw, 400px);
+      margin: 0 auto 25px;
+    }
+
+    .pointer {
+      position: absolute;
+      z-index: 5;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 18px solid transparent;
+      border-right: 18px solid transparent;
+      border-top: 38px solid #d62828;
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,.3));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+      box-shadow:
+        0 8px 25px rgba(100,65,0,.25),
+        0 0 0 8px #fff,
+        0 0 0 11px #c88b25;
+    }
+
+    .center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: #fff;
+      border: 7px solid #c88b25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 3px 10px rgba(0,0,0,.25);
+      pointer-events: none;
+    }
+
+    button {
+      width: min(88vw, 360px);
+      border: none;
+      border-radius: 18px;
+      padding: 17px 25px;
+      background: #d62828;
+      color: white;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #9d1d1d;
+    }
+
+    button:active {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #9d1d1d;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .result {
+      margin-top: 22px;
+      min-height: 65px;
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.8);
+      box-shadow: 0 4px 15px rgba(0,0,0,.08);
+      font-size: 20px;
+      font-weight: 800;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+      animation: pop .4s ease;
+    }
+
+    .result .emoji {
+      font-size: 30px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .timer {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.55);
+      font-size: 14px;
+      display: none;
+    }
+
+    .timer.show {
+      display: block;
+    }
+
+    .note {
+      margin-top: 15px;
+      font-size: 12px;
+      opacity: .6;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(.7);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="app">
+
+  <h1>🎡 KOŁO FORTUNY</h1>
+
+  <p class="subtitle">
+    Zakręć i sprawdź, co wygrasz!
+  </p>
+
+  <div class="wheel-wrapper">
+
+    <div class="pointer"></div>
+
+    <canvas id="wheel" width="800" height="800"></canvas>
+
+    <div class="center">
+      FORTUNA
+    </div>
+
+  </div>
+
+  <button id="spinButton">
+    🎡 ZAKRĘĆ!
+  </button>
+
+  <div id="result" class="result"></div>
+
+  <div id="timer" class="timer"></div>
+
+  <div class="note">
+    Jedno losowanie co 24 godziny 🍀
+  </div>
+
+</main>
+
+<script>
+
+  /* =========================
+     TELEGRAM
+  ========================= */
+
+  const tg = window.Telegram?.WebApp;
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+
+  /* =========================
+     ELEMENTY
+  ========================= */
+
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+
+  const spinButton = document.getElementById("spinButton");
+
+  const resultBox = document.getElementById("result");
+
+  const timerBox = document.getElementById("timer");
+
+
+  /* =========================
+     NAGRODY
+  ========================= */
+
+  const prizes = [
+
+    {
+      name: "PAKIET",
+      emoji: "🎁",
+      color: "#f4b942",
+      weight: 3
+    },
+
+    {
+      name: "ZNIŻKA 15%",
+      emoji: "🔥",
+      color: "#e85d04",
+      weight: 10
+    },
+
+    {
+      name: "ZNIŻKA 10%",
+      emoji: "💰",
+      color: "#ffca3a",
+      weight: 15
+    },
+
+    {
+      name: "SPRÓBUJ PONOWNIE",
+      emoji: "🔄",
+      color: "#90be6d",
+      weight: 18
+    },
+
+    {
+      name: "ZNIŻKA 5%",
+      emoji: "💸",
+      color: "#43aa8b",
+      weight: 18
+    },
+
+    {
+      name: "SPRÓBUJ PONOWNIE",
+      emoji: "🔄",
+      color: "#577590",
+      weight: 18
+    },
+
+    {
+      name: "ZNIŻKA 10%",
+      emoji: "💰",
+      color: "#f9c74f",
+      weight: 10
+    },
+
+    {
+      name: "ZNIŻKA 5%",
+      emoji: "💸",
+      color: "#4d908e",
+      weight: 8
+    }
+
+  ];
+
+
+  /* =========================
+     KOŁO
+  ========================= */
+
+  let rotation = 0;
+
+  let spinning = false;
+
+  const TWO_PI = Math.PI * 2;
+
+  const segmentAngle = TWO_PI / prizes.length;
+
+
+  function drawWheel() {
+
+    const center = canvas.width / 2;
+
+    const radius = canvas.width / 2 - 10;
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    for (let i = 0; i < prizes.length; i++) {
+
+      const start =
+        rotation + i * segmentAngle;
+
+      const end =
+        start + segmentAngle;
+
+
+      ctx.beginPath();
+
+      ctx.moveTo(center, center);
+
+      ctx.arc(
+        center,
+        center,
+        radius,
+        start,
+        end
+      );
+
+      ctx.closePath();
+
+      ctx.fillStyle =
+        prizes[i].color;
+
+      ctx.fill();
+
+
+      ctx.strokeStyle = "#ffffff";
+
+      ctx.lineWidth = 6;
+
+      ctx.stroke();
+
+
+      /* Tekst */
+
+      ctx.save();
+
+      ctx.translate(center, center);
+
+      ctx.rotate(
+        start + segmentAngle / 2
+      );
+
+      ctx.textAlign = "right";
+
+      ctx.fillStyle = "#ffffff";
+
+      ctx.font =
+        prizes[i].name === "SPRÓBUJ PONOWNIE"
+          ? "900 21px Arial"
+          : "900 27px Arial";
+
+
+      ctx.shadowColor =
+        "rgba(0,0,0,.35)";
+
+      ctx.shadowBlur = 4;
+
+
+      ctx.fillText(
+        prizes[i].name,
+        radius - 25,
+        8
+      );
+
+
+      ctx.restore();
+
+    }
+
+
+    /* Pierścień */
+
+    ctx.beginPath();
+
+    ctx.arc(
+      center,
+      center,
+      radius,
+      0,
+      TWO_PI
+    );
+
+    ctx.strokeStyle = "#ffffff";
+
+    ctx.lineWidth = 12;
+
+    ctx.stroke();
+
+  }
+
+
+  drawWheel();
+
+
+  /* =========================
+     LOSOWANIE
+  ========================= */
+
+  function choosePrize() {
+
+    const totalWeight =
+      prizes.reduce(
+        (sum, prize) =>
+          sum + prize.weight,
+        0
+      );
+
+
+    let random =
+      Math.random() * totalWeight;
+
+
+    for (
+      let i = 0;
+      i < prizes.length;
+      i++
+    ) {
+
+      random -= prizes[i].weight;
+
+
+      if (random <= 0) {
+
+        return i;
+
+      }
+
+    }
+
+
+    return prizes.length - 1;
+
+  }
+
+
+  function normalizeAngle(angle) {
+
+    return (
+      (angle % TWO_PI + TWO_PI)
+      % TWO_PI
+    );
+
+  }
+
+
+  /* =========================
+     LIMIT 24 GODZINY
+  ========================= */
+
+  const STORAGE_KEY =
+    "last_spin_timestamp";
+
+
+  const LIMIT =
+    24 * 60 * 60 * 1000;
+
+
+  function getCloudStorage() {
+
+    if (
+      tg &&
+      tg.CloudStorage
+    ) {
+
+      return tg.CloudStorage;
+
+    }
+
+    return null;
+
+  }
+
+
+  function getLastSpin(callback) {
+
+    const cloud =
+      getCloudStorage();
+
+
+    if (cloud) {
+
+      cloud.getItem(
+        STORAGE_KEY,
+        function(error, value) {
+
+          if (error) {
+
+            callback(null);
+
+            return;
+
+          }
+
+
+          callback(
+            value
+              ? Number(value)
+              : null
+          );
+
+        }
+      );
+
+      return;
+
+    }
+
+
+    /* Awaryjnie poza Telegramem */
+
+    const value =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    callback(
+      value
+        ? Number(value)
+        : null
+    );
+
+  }
+
+
+  function saveLastSpin(timestamp) {
+
+    const cloud =
+      getCloudStorage();
+
+
+    if (cloud) {
+
+      cloud.setItem(
+        STORAGE_KEY,
+        String(timestamp),
+        function(error) {
+
+          if (error) {
+
+            console.log(
+              "CloudStorage error:",
+              error
+            );
+
+          }
+
+        }
+      );
+
+      return;
+
+    }
+
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      String(timestamp)
+    );
+
+  }
+
+
+  function getRemainingTime(lastSpin) {
+
+    const now =
+      Date.now();
+
+
+    const remaining =
+      LIMIT -
+      (now - lastSpin);
+
+
+    return Math.max(
+      0,
+      remaining
+    );
+
+  }
+
+
+  function formatTime(milliseconds) {
+
+    const totalSeconds =
+      Math.ceil(
+        milliseconds / 1000
+      );
+
+
+    const hours =
+      Math.floor(
+        totalSeconds / 3600
+      );
+
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) / 60
+      );
+
+
+    const seconds =
+      totalSeconds % 60;
+
+
+    return (
+      String(hours).padStart(2, "0")
+      + ":"
+      + String(minutes).padStart(2, "0")
+      + ":"
+      + String(seconds).padStart(2, "0")
+    );
+
+  }
+
+
+  function showTimer(remaining) {
+
+    if (remaining <= 0) {
+
+      timerBox.classList.remove(
+        "show"
+      );
+
+      spinButton.disabled = false;
+
+      spinButton.textContent =
+        "🎡 ZAKRĘĆ!";
+
+      return;
+
+    }
+
+
+    timerBox.classList.add(
+      "show"
+    );
+
+
+    timerBox.innerHTML =
+      "⏳ Następne losowanie za:<br>" +
+      "<strong>" +
+      formatTime(remaining) +
+      "</strong>";
+
+
+    spinButton.disabled = true;
+
+    spinButton.textContent =
+      "⏳ WRÓĆ JUTRO";
+
+  }
+
+
+  function checkLimit() {
+
+    getLastSpin(
+      function(lastSpin) {
+
+        if (!lastSpin) {
+
+          spinButton.disabled =
+            false;
+
+          timerBox.classList.remove(
+            "show"
+          );
+
+          return;
+
+        }
+
+
+        const remaining =
+          getRemainingTime(
+            lastSpin
+          );
+
+
+        showTimer(
+          remaining
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     ODLICZANIE
+  ========================= */
+
+  setInterval(
+    checkLimit,
+    1000
+  );
+
+
+  checkLimit();
+
+
+  /* =========================
+     KRĘCENIE
+  ========================= */
+
+  function spin() {
+
+    if (spinning) return;
+
+
+    /*
+     * Sprawdzamy limit
+     * jeszcze raz przed losowaniem.
+     */
+
+    getLastSpin(
+      function(lastSpin) {
+
+        if (lastSpin) {
+
+          const remaining =
+            getRemainingTime(
+              lastSpin
+            );
+
+
+          if (remaining > 0) {
+
+            showTimer(
+              remaining
+            );
+
+            return;
+
+          }
+
+        }
+
+
+        spinning = true;
+
+        spinButton.disabled =
+          true;
+
+        resultBox.classList.remove(
+          "show"
+        );
+
+
+        const winnerIndex =
+          choosePrize();
+
+
+        const targetCenter =
+          winnerIndex *
+          segmentAngle +
+          segmentAngle / 2;
+
+
+        const pointerAngle =
+          -Math.PI / 2;
+
+
+        const current =
+          normalizeAngle(
+            rotation
+          );
+
+
+        let targetRotation =
+          pointerAngle -
+          targetCenter;
+
+
+        targetRotation =
+          normalizeAngle(
+            targetRotation
+          );
+
+
+        let difference =
+          targetRotation -
+          current;
+
+
+        if (difference < 0) {
+
+          difference += TWO_PI;
+
+        }
+
+
+        const extraSpins =
+          (
+            5 +
+            Math.floor(
+              Math.random() * 3
+            )
+          ) * TWO_PI;
+
+
+        const startRotation =
+          rotation;
+
+
+        const finalRotation =
+          rotation +
+          difference +
+          extraSpins;
+
+
+        const duration = 5000;
+
+        const startTime =
+          performance.now();
+
+
+        function animate(now) {
+
+          const elapsed =
+            now - startTime;
+
+
+          const progress =
+            Math.min(
+              elapsed / duration,
+              1
+            );
+
+
+          const eased =
+            1 -
+            Math.pow(
+              1 - progress,
+              4
+            );
+
+
+          rotation =
+            startRotation +
+            (
+              finalRotation -
+              startRotation
+            ) * eased;
+
+
+          drawWheel();
+
+
+          if (progress < 1) {
+
+            requestAnimationFrame(
+              animate
+            );
+
+          } else {
+
+            rotation =
+              finalRotation;
+
+
+            drawWheel();
+
+
+            /*
+             * Zapisujemy moment
+             * zakończenia losowania.
+             */
+
+            saveLastSpin(
+              Date.now()
+            );
+
+
+            setTimeout(
+              function() {
+
+                showResult(
+                  prizes[winnerIndex]
+                );
+
+
+                spinning =
+                  false;
+
+
+                checkLimit();
+
+
+              },
+              300
+            );
+
+          }
+
+        }
+
+
+        requestAnimationFrame(
+          animate
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     WYNIK
+  ========================= */
+
+  function showResult(prize) {
+
+    resultBox.innerHTML =
+
+      "<span class='emoji'>" +
+      prize.emoji +
+      "</span>" +
+
+      "WYGRAŁAŚ!<br>" +
+
+      "<strong>" +
+      prize.name +
+      "</strong>";
+
+
+    resultBox.classList.add(
+      "show"
+    );
+
+
+    if (
+      tg &&
+      tg.HapticFeedback
+    ) {
+
+      try {
+
+        tg.HapticFeedback
+          .notificationOccurred(
+            "success"
+          );
+
+      } catch (e) {}
+
+    }
+
+  }
+
+
+  /* =========================
+     PRZYCISK
+  ========================= */
+
+  spinButton.addEventListener(
+    "click",
+    spin
+  );
+
+</script>
+
+</body>
+</html>
+```
 
