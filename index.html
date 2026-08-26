@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#09020d">
+<title>♥ Koło Fortuny ♥</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#08020c;--pink:#ff1493;--pink2:#ff4db8;--light:#ffd1ec;--white:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 10%,#30051f 0,#10030f 35%,var(--bg) 75%);color:var(--white);font-family:Arial,sans-serif}
+body{overflow-x:hidden}
+body:before,body:after{content:"♥  ♥  ♡  ♥  ♡  ♥";position:fixed;inset:auto 0 0;text-align:center;color:var(--pink);opacity:.12;font-size:38px;letter-spacing:20px;pointer-events:none;animation:float 9s linear infinite}
+body:after{top:10%;bottom:auto;font-size:22px;animation-duration:12s}
+@keyframes float{from{transform:translateY(70vh)}to{transform:translateY(-80vh)}}
+.app{position:relative;z-index:1;max-width:520px;margin:auto;min-height:100vh;padding:22px 14px 34px;text-align:center}
+.kicker{color:var(--pink2);font-weight:900;letter-spacing:3px;font-size:13px;text-shadow:0 0 12px var(--pink)}
+h1{margin:7px 0;font-size:clamp(32px,9vw,46px);line-height:1;text-shadow:0 0 8px #fff,0 0 20px var(--pink),0 0 42px var(--pink)}
+.sub{color:#d8a6c8;font-size:14px;margin:8px 0 20px}
+.wheelbox{position:relative;width:min(90vw,420px);height:min(90vw,420px);margin:0 auto 26px}
+canvas{width:100%;height:100%;display:block;border-radius:50%;filter:drop-shadow(0 0 12px var(--pink)) drop-shadow(0 0 28px rgba(255,20,147,.45))}
+.ring{position:absolute;inset:-7px;border:3px solid var(--pink);border-radius:50%;box-shadow:0 0 9px var(--pink),0 0 30px var(--pink),inset 0 0 18px var(--pink);pointer-events:none}
+.pointer{position:absolute;z-index:3;top:-13px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:19px solid transparent;border-right:19px solid transparent;border-top:42px solid #fff;filter:drop-shadow(0 0 7px var(--pink)) drop-shadow(0 0 14px var(--pink))}
+.center{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#ff8bd2,#ff1493 55%,#9b0057);border:4px solid #fff;box-shadow:0 0 10px #fff,0 0 25px var(--pink);font-weight:1000;font-size:13px;text-shadow:0 2px 4px #70003e}
+button,.link{width:min(92vw,380px);display:block;margin:0 auto 12px;border-radius:17px;padding:15px 18px;font-size:18px;font-weight:1000;text-decoration:none;text-align:center;cursor:pointer}
+.spin{border:2px solid var(--pink2);background:linear-gradient(135deg,#ff1493,#bd0069);color:#fff;box-shadow:0 0 9px var(--pink),0 0 24px rgba(255,20,147,.7),0 6px 0 #70003e}
+.spin:active{transform:translateY(5px);box-shadow:0 0 10px var(--pink),0 1px 0 #70003e}
+.spin:disabled{opacity:.5;cursor:not-allowed}
+.link{border:1px solid var(--pink2);background:rgba(255,20,147,.09);color:#fff;box-shadow:0 0 9px rgba(255,20,147,.45),inset 0 0 12px rgba(255,20,147,.08)}
+.link:active{transform:scale(.98)}
+.result,.timer{width:min(92vw,380px);margin:16px auto 0;padding:15px;border:1px solid rgba(255,77,184,.4);border-radius:17px;background:rgba(255,20,147,.09);box-shadow:0 0 18px rgba(255,20,147,.22)}
+.result{display:none}.result.show{display:block;animation:pop .4s ease}.result .heart{font-size:38px;text-shadow:0 0 20px var(--pink)}.won{color:var(--pink2);font-size:12px;letter-spacing:2px;font-weight:900}.prize{font-size:23px;font-weight:1000;margin-top:5px;text-shadow:0 0 12px var(--pink)}
+.timer{display:none;color:#d8a6c8;font-size:13px}.timer.show{display:block}.timer strong{display:block;color:#fff;font-size:21px;letter-spacing:2px;margin-top:4px;text-shadow:0 0 10px var(--pink)}
+.note{margin-top:18px;color:#a87999;font-size:11px}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="kicker">♥ TWOJA SZANSA ♥</div>
+  <h1>KOŁO FORTUNY</h1>
+  <div class="sub">Zakręć i sprawdź, co wygrasz ✨</div>
+
+  <div class="wheelbox">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="900" height="900"></canvas>
+    <div class="ring"></div>
+    <div class="center">♥<br>FORTUNA</div>
+  </div>
+
+  <button id="spin" class="spin">♥ ZAKRĘĆ KOŁEM ♥</button>
+
+  <!-- Wklej swoje adresy zamiast tekstów w href -->
+  <a class="link" href="TU_WKLEJ_LINK_DO_PROBEK" target="_blank" rel="noopener">♥ PRÓBKI ♥</a>
+  <a class="link" href="TU_WKLEJ_LINK_DO_INFORMACJI_O_MNIE" target="_blank" rel="noopener">♥ INFORMACJE O MNIE ♥</a>
+
+  <div id="result" class="result"></div>
+  <div id="timer" class="timer"></div>
+  <div class="note">Jedno losowanie na 24 godziny ♥</div>
+</main>
+
+<script>
+const tg=window.Telegram?.WebApp||null;
+if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#08020c");tg.setBackgroundColor("#08020c")}catch(e){}}
+
+const canvas=document.getElementById("wheel"),ctx=canvas.getContext("2d");
+const spinBtn=document.getElementById("spin"),result=document.getElementById("result"),timer=document.getElementById("timer");
+
+const prizes=[
+ {name:"PAKIET",emoji:"🎁",color:"#ff1493",weight:2},
+ {name:"ZNIŻKA 15%",emoji:"💗",color:"#8b0053",weight:8},
+ {name:"SPRÓBUJ PONOWNIE",emoji:"♥",color:"#25091f",weight:18},
+ {name:"ZNIŻKA 10%",emoji:"💗",color:"#d40078",weight:12},
+ {name:"SPRÓBUJ PONOWNIE",emoji:"♥",color:"#3a0b2d",weight:18},
+ {name:"ZNIŻKA 5%",emoji:"💗",color:"#ff4db8",weight:17},
+ {name:"SPRÓBUJ PONOWNIE",emoji:"♥",color:"#210718",weight:17},
+ {name:"ZNIŻKA 10%",emoji:"💗",color:"#a80060",weight:8}
+];
+
+const TAU=Math.PI*2,segment=TAU/prizes.length;
+let rotation=0,spinning=false;
+
+function draw(){
+ const c=canvas.width/2,r=c-16;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ for(let i=0;i<prizes.length;i++){
+  const a=rotation+i*segment,b=a+segment;
+  ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,a,b);ctx.closePath();
+  ctx.fillStyle=prizes[i].color;ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=7;ctx.stroke();
+  ctx.save();ctx.translate(c,c);ctx.rotate(a+segment/2);ctx.textAlign="right";
+  ctx.fillStyle="#fff";ctx.shadowColor="#ff1493";ctx.shadowBlur=10;
+  ctx.font=prizes[i].name==="SPRÓBUJ PONOWNIE"?"900 21px Arial":"900 28px Arial";
+  ctx.fillText(prizes[i].name,r-30,8);ctx.restore();
+ }
+ ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.strokeStyle="#fff";ctx.lineWidth=9;ctx.shadowColor="#ff1493";ctx.shadowBlur=18;ctx.stroke();ctx.shadowBlur=0;
+}
+draw();
+
+function pick(){
+ const total=prizes.reduce((s,p)=>s+p.weight,0);let n=Math.random()*total;
+ for(let i=0;i<prizes.length;i++){n-=prizes[i].weight;if(n<=0)return i}
+ return prizes.length-1;
+}
+function norm(a){return((a%TAU)+TAU)%TAU}
+
+const KEY="last_spin_timestamp",LIMIT=86400000;
+function getLast(cb){
+ if(tg?.CloudStorage){tg.CloudStorage.getItem(KEY,(err,v)=>cb(err?null:(v?Number(v):null)));return}
+ const v=localStorage.getItem(KEY);cb(v?Number(v):null);
+}
+function saveLast(t){
+ if(tg?.CloudStorage){tg.CloudStorage.setItem(KEY,String(t),()=>{});return}
+ localStorage.setItem(KEY,String(t));
+}
+function fmt(ms){
+ let s=Math.ceil(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+ return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+}
+function updateLimit(){
+ getLast(last=>{
+  if(!last||Date.now()-last>=LIMIT){
+   spinBtn.disabled=false;spinBtn.textContent="♥ ZAKRĘĆ KOŁEM ♥";timer.classList.remove("show");return;
+  }
+  const left=LIMIT-(Date.now()-last);
+  spinBtn.disabled=true;spinBtn.textContent="♥ WRÓĆ PÓŹNIEJ ♥";
+  timer.classList.add("show");timer.innerHTML="Następne losowanie za:<strong>"+fmt(left)+"</strong>";
+ });
+}
+function showPrize(p){
+ result.innerHTML='<div class="heart">♥</div><div class="won">GRATULACJE!</div><div class="prize">'+p.emoji+" "+p.name+"</div>";
+ result.classList.add("show");
+ if(tg?.HapticFeedback)try{tg.HapticFeedback.notificationOccurred("success")}catch(e){}
+}
+function spin(){
+ if(spinning)return;
+ getLast(last=>{
+  if(last&&Date.now()-last<LIMIT){updateLimit();return}
+  spinning=true;spinBtn.disabled=true;result.classList.remove("show");
+  const winner=pick(),target=winner*segment+segment/2,pointer=-Math.PI/2,current=norm(rotation);
+  let diff=norm(pointer-target)-current;if(diff<0)diff+=TAU;
+  const start=rotation,finish=rotation+diff+(5+Math.floor(Math.random()*3))*TAU,duration=5200,t0=performance.now();
+  function frame(now){
+   const p=Math.min((now-t0)/duration,1),ease=1-Math.pow(1-p,4);
+   rotation=start+(finish-start)*ease;draw();
+   if(p<1)requestAnimationFrame(frame);
+   else{
+    rotation=finish;draw();saveLast(Date.now());
+    setTimeout(()=>{showPrize(prizes[winner]);spinning=false;updateLimit()},250);
+   }
+  }
+  requestAnimationFrame(frame);
+ });
+}
+spinBtn.addEventListener("click",spin);
+setInterval(updateLimit,1000);
+updateLimit();
+</script>
+</body>
+</html>
