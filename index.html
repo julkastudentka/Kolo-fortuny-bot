@@ -612,7 +612,7 @@ Zakręć kołem i sprawdź swoją nagrodę ✨
 </div>
 
 <div class="notice">
-🎀 Jedno losowanie na 24 godziny • Powodzenia! ♥
+🎀 Losuj ponownie, kiedy tylko chcesz! • Powodzenia! ♥
 </div>
 
 <!-- KOŁO -->
@@ -689,10 +689,6 @@ id="nextApp"
 
 <div id="result" class="card result"></div>
 
-<!-- LICZNIK 24H -->
-
-<div id="timer" class="card timer"></div>
-
 <!-- NAJLEPSZA WYGRANA -->
 
 <div class="card best">
@@ -705,33 +701,7 @@ Jeszcze nikt nie wygrał
 
 </div>
 
-<!-- STATYSTYKI -->
-
-<div class="card stats">
-
-<div class="stat">
-<b id="onlineCount">0</b>
-online
-</div>
-
-<div class="stat">
-<b id="globalSpinCount">0</b>
-zakręceń
-</div>
-
-<div class="stat">
-<b id="winCount">0</b>
-wygranych
-</div>
-
-<div class="stat">
-<b id="bestShort">—</b>
-najlepsza
-</div>
-
-</div>
-
-<!-- HISTORIA -->
+  <!-- HISTORIA -->
 
 <div class="card history">
 
@@ -797,8 +767,6 @@ var claimBonusBtn=document.getElementById("claimBonusBtn");
 var shareCountEl=document.getElementById("shareCount");
 var shareProgress=document.getElementById("shareProgress");
 var shareNote=document.getElementById("shareNote");
-var onlineCountEl=document.getElementById("onlineCount");
-var globalSpinCountEl=document.getElementById("globalSpinCount");
 
 var modal=document.getElementById("modal");
 var box=modal.querySelector(".modal-box");
@@ -885,7 +853,7 @@ var rotation=0;
 var spinning=false;
 
 var KEY="julcia_kolo_fortuny_v6";
-var DAY=86400000;
+  var DAY=86400000;
 
 /* PAMIĘĆ */
 
@@ -1037,52 +1005,7 @@ return ((a%TAU)+TAU)%TAU;
 var SHARE_TARGET=15;
 var SHARE_URL="https://t.me/share/url?url=https://t.me/KoloFortunyBot&text=Darmowe%20ko%C5%82o%20fortuny%20z%20pakietami%2018%2B%20dla%20ka%C5%BCdego%20co%2024h%F0%9F%91%86%E2%99%A5%EF%B8%8F";
 
-/* LICZNIKI */
-var DEMO_START=Date.now();
-
-/*
- * Licznik zakręceń:
- * - zaczyna od 0,
- * - +1 co 5 minut.
- *
- * Licznik online:
- * - zaczyna od 0,
- * - zmienia się powoli,
- * - bez backendu jest to wyłącznie licznik demonstracyjny.
- */
-function updatePublicStats(){
-  var elapsed=Math.max(0,Date.now()-DEMO_START);
-
-  var spins=Math.floor(elapsed/300000);
-  globalSpinCountEl.textContent=spins.toLocaleString("pl-PL");
-
-  /*
-   * Powolna zmiana online co 20–35 sekund.
-   * Wartość pozostaje w okolicy 100.
-   */
-  if(
-    typeof window._onlineValue==="undefined"
-  ){
-    window._onlineValue=0;
-    window._nextOnlineChange=Date.now()+15000;
-  }
-
-  var now=Date.now();
-
-  if(now>=window._nextOnlineChange){
-    var change=Math.floor(Math.random()*11)-5;
-    window._onlineValue=Math.max(
-      0,
-      Math.min(120,window._onlineValue+change)
-    );
-
-    window._nextOnlineChange=
-      now+20000+Math.floor(Math.random()*15001);
-  }
-
-  onlineCountEl.textContent=
-    window._onlineValue.toLocaleString("pl-PL");
-}
+/* USTAWIENIA */
 
 function updateShareUI(){
   var s=getState();
@@ -1155,81 +1078,41 @@ claimBonusBtn.addEventListener("click",function(){
 
 function updateUI(){
 
-var s=getState();
+  var s=getState();
 
-updateShareUI();
-updatePublicStats();
+  updateShareUI();
 
-var left=DAY-(Date.now()-s.last);
+  var left=DAY-(Date.now()-(Number(s.last)||0));
 
-document.getElementById("spinCount").textContent=s.spins;
+  if(!s.last || left<=0 || (Number(s.bonusSpins)||0)>0){
 
-document.getElementById("winCount").textContent=s.wins;
+    btn.disabled=false;
+    btn.textContent=(Number(s.bonusSpins)||0)>0
+      ? "🎁 ZAKRĘĆ DODATKOWYM LOSEM"
+      : "♥ ZAKRĘĆ KOŁEM ♥";
 
-document.getElementById("bestPrize").textContent=
-s.best || "Jeszcze nikt nie wygrał";
+    timer.className="card timer";
+    timer.innerHTML="";
+    return;
+  }
 
-document.getElementById("bestShort").textContent=
-s.best==="PAKIET"
-?
-"🎁"
-:
-(
-s.best && s.best!=="—"
-?
-s.best.replace("ZNIŻKA ","")
-:
-"—"
-);
+  btn.disabled=true;
+  btn.textContent="♥ WRÓĆ PÓŹNIEJ ♥";
 
-if(s.history.length){
+  timer.className="card timer show";
 
-document.getElementById("historyList").innerHTML=
-s.history.slice(0,5).map(function(x){
+  var sec=Math.ceil(left/1000);
+  var h=Math.floor(sec/3600);
+  var m=Math.floor((sec%3600)/60);
+  var ss=sec%60;
 
-return `
-<div class="history-item">
-<b>${x.prize}</b>
-<span>${x.date}</span>
-</div>
-`;
-
-}).join("");
-
-}
-
-if(!s.last || left<=0 || (Number(s.bonusSpins)||0)>0){
-
-btn.disabled=false;
-btn.textContent=(Number(s.bonusSpins)||0)>0
-  ? "🎁 ZAKRĘĆ DODATKOWYM LOSEM"
-  : "♥ ZAKRĘĆ KOŁEM ♥";
-
-timer.className="card timer";
-
-return;
-
-}
-
-btn.disabled=true;
-btn.textContent="♥ WRÓĆ PÓŹNIEJ ♥";
-
-timer.className="card timer show";
-
-var sec=Math.ceil(left/1000);
-
-var h=Math.floor(sec/3600);
-var m=Math.floor((sec%3600)/60);
-var ss=sec%60;
-
-timer.innerHTML=
-"Następne losowanie za:"+
-"<strong>"+
-String(h).padStart(2,"0")+":"+
-String(m).padStart(2,"0")+":"+
-String(ss).padStart(2,"0")+
-"</strong>";
-
+  timer.innerHTML=
+    "Następne losowanie za:"+
+    "<strong>"+
+    String(h).padStart(2,"0")+":"+
+    String(m).padStart(2,"0")+":"+
+    String(ss).padStart(2,"0")+
+    "</strong>";
 }
 
 /* DŹWIĘK */
@@ -1494,18 +1377,6 @@ var s=getState();
 
 var usingBonus=(Number(s.bonusSpins)||0)>0;
 
-if(
-!usingBonus &&
-s.last &&
-Date.now()-s.last<DAY
-){
-
-updateUI();
-
-return;
-
-}
-
 spinning=true;
 
 btn.disabled=true;
@@ -1578,10 +1449,6 @@ draw();
 var prize=prizes[winner];
 
 var d=new Date();
-
-if(!usingBonus){
-  s.last=Date.now();
-}
 
 s.spins++;
 
