@@ -236,6 +236,7 @@ button:disabled{
   background:rgba(255,20,147,.09);
   box-shadow:0 0 11px rgba(255,20,147,.35);
 }
+
 .share-card{
   margin-top:14px;
 }
@@ -289,8 +290,6 @@ button:disabled{
 .claim-btn{
   background:linear-gradient(135deg,#ff5fbd,#a80060);
 }
-
-
 
 .coming{
   border-color:#a83b88;
@@ -638,70 +637,49 @@ button:disabled{
   cursor:grabbing;
 }
 
-
-/* ✨ ROMANTYCZNY NEON — ZDRAPKA */
-body:before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
+/* DUŻY LICZNIK KOŁA */
+.big-wheel-countdown{
+  margin:18px 0 22px;
+  padding:22px 14px 20px;
+  text-align:center;
+  border:1px solid rgba(255,95,189,.72);
   background:
-    linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%),
-    radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.34));
-}
-
-.content{
-  filter:drop-shadow(0 10px 28px rgba(0,0,0,.28));
-}
-
-.card,.link,button{
-  position:relative;
-  overflow:hidden;
-}
-
-.card{
-  background:
-    linear-gradient(145deg,rgba(255,95,189,.11),rgba(15,2,15,.78)),
-    rgba(255,20,147,.035);
+    radial-gradient(circle at 50% 0%,rgba(255,95,189,.22),transparent 52%),
+    linear-gradient(145deg,rgba(42,5,30,.98),rgba(8,2,11,.98));
   box-shadow:
-    0 14px 35px rgba(0,0,0,.42),
-    inset 0 1px 0 rgba(255,255,255,.08),
-    0 0 20px rgba(255,20,147,.13);
+    0 0 10px rgba(255,20,147,.55),
+    0 0 32px rgba(255,20,147,.25),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -18px 35px rgba(0,0,0,.35);
 }
 
-.card:before,.link:before,button:before{
-  content:"";
-  position:absolute;
-  left:-120%;
-  top:0;
-  width:70%;
-  height:100%;
-  background:linear-gradient(105deg,transparent,rgba(255,255,255,.20),transparent);
-  transform:skewX(-18deg);
-  transition:left .8s ease;
-  pointer-events:none;
+.countdown-label{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1.6px;
+  color:#ffd2ee;
+  text-shadow:0 0 9px rgba(255,20,147,.8);
+  margin-bottom:8px;
 }
 
-.card:hover:before,.link:hover:before,button:hover:before{
-  left:150%;
+.big-wheel-time{
+  font-variant-numeric:tabular-nums;
+  font-size:clamp(42px,13vw,74px);
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:3px;
+  color:#fff;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 14px #ff8bd2,
+    0 0 30px #ff1493,
+    0 0 52px rgba(255,20,147,.65);
+  margin:8px 0 9px;
 }
 
-button,.link{
-  box-shadow:
-    0 8px 0 #5b0035,
-    0 12px 28px rgba(255,20,147,.25),
-    inset 0 1px 0 rgba(255,255,255,.34);
-  transition:transform .16s ease,filter .16s ease;
-}
-
-button:hover,.link:hover{
-  filter:brightness(1.08);
-  transform:translateY(-2px);
-}
-
-button:active{
-  transform:translateY(5px);
+.countdown-sub{
+  font-size:12px;
+  color:#dba9c8;
 }
 
 .scratch-card{
@@ -766,98 +744,6 @@ button:active{
 #newScratchBtn{
   background:
     linear-gradient(135deg,#ff1493,#c40072 55%,#8a004e);
-}
-
-.scratch-timer{
-  margin-top:10px;
-  color:#f6c5e4;
-  font-size:12px;
-}
-
-.scratch-timer strong{
-  display:block;
-  margin-top:4px;
-  color:#fff;
-  font-size:19px;
-  letter-spacing:2px;
-  text-shadow:0 0 12px var(--pink);
-}
-
-.heart-fly{
-  position:fixed;
-  z-index:60;
-  left:0;
-  bottom:-35px;
-  pointer-events:none;
-  color:#ff8bd2;
-  font-size:14px;
-  text-shadow:
-    0 0 5px #fff,
-    0 0 12px #ff1493,
-    0 0 25px #ff1493;
-  animation:heartFly linear forwards;
-}
-
-@keyframes heartFly{
-  0%{
-    transform:translate3d(0,0,0) scale(.75) rotate(0deg);
-    opacity:0;
-  }
-  12%{opacity:.9}
-  55%{
-    transform:translate3d(var(--drift),-55vh,0) scale(1) rotate(18deg);
-    opacity:.8;
-  }
-  100%{
-    transform:translate3d(calc(var(--drift) * -0.45),-112vh,0) scale(.6) rotate(-25deg);
-    opacity:0;
-  }
-}
-
-
-/* DUŻY LICZNIK KOŁA */
-.big-wheel-countdown{
-  margin:18px 0 22px;
-  padding:22px 14px 20px;
-  text-align:center;
-  border:1px solid rgba(255,95,189,.72);
-  background:
-    radial-gradient(circle at 50% 0%,rgba(255,95,189,.22),transparent 52%),
-    linear-gradient(145deg,rgba(42,5,30,.98),rgba(8,2,11,.98));
-  box-shadow:
-    0 0 10px rgba(255,20,147,.55),
-    0 0 32px rgba(255,20,147,.25),
-    inset 0 1px 0 rgba(255,255,255,.10),
-    inset 0 -18px 35px rgba(0,0,0,.35);
-}
-
-.countdown-label{
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:1.6px;
-  color:#ffd2ee;
-  text-shadow:0 0 9px rgba(255,20,147,.8);
-  margin-bottom:8px;
-}
-
-.big-wheel-time{
-  font-variant-numeric:tabular-nums;
-  font-size:clamp(42px,13vw,74px);
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:3px;
-  color:#fff;
-  text-shadow:
-    0 0 5px #fff,
-    0 0 14px #ff8bd2,
-    0 0 30px #ff1493,
-    0 0 52px rgba(255,20,147,.65);
-  margin:8px 0 9px;
-}
-
-.countdown-sub{
-  font-size:12px;
-  color:#dba9c8;
 }
 
 </style>
@@ -931,35 +817,13 @@ FORTUNA
 
 <!-- TWOJE LINKI -->
 
-<a
-class="link"
-href="https://t.me/julciaprobkipakietow"
-target="_blank"
-rel="noopener noreferrer"
->
+<a class="link" href="https://t.me/julciaprobkipakietow" target="_blank" rel="noopener noreferrer">
 ♥ PRÓBKI ♥
 </a>
 
-<a
-class="link"
-href="https://t.me/julciauczennica"
-target="_blank"
-rel="noopener noreferrer"
->
+<a class="link" href="https://t.me/julciauczennica" target="_blank" rel="noopener noreferrer">
 ♥ INFORMACJE O MNIE ♥
 </a>
-
-<!-- KOLEJNA APLIKACJA -->
-
-<a
-class="link coming"
-href="#"
-id="scratchAppLink"
->
-♥ KOLEJNA APLIKACJA ♥
-</a>
-
-
 
 <!-- DUŻY LICZNIK DO KOLEJNEGO LOSOWANIA -->
 <div id="bigWheelCountdown" class="card big-wheel-countdown">
@@ -974,7 +838,7 @@ id="scratchAppLink"
   <div class="share-sub">Zdrap warstwę i odkryj swoje zaproszenie do zakupu pakieciku 😘</div>
 
   <div class="scratch-wrap">
-    <div id="scratchMessage" class="scratch-message"></div>
+    <div id="scratchMessage" class="scratch-message">Zdrap mnie! 💝</div>
     <canvas id="scratchCanvas" width="700" height="360"></canvas>
   </div>
 
@@ -982,7 +846,7 @@ id="scratchAppLink"
     ✨ NOWA ZDRAPKA
   </button>
 
-  <a id="scratchBuyBtn" class="link" href="https://t.me/saskaj?text=Chc%C4%99%20kupi%C4%87%20pakiecik%20%F0%9F%98%98" target="_blank" rel="noopener noreferrer" style="display:none">
+  <a id="scratchBuyBtn" class="link" href="https://t.me/saskaj?text=Chc%C4%99%20kupi%C4%87%20pakiecik%20%F0%9F%98%98" target="_blank" rel="noopener noreferrer" style="display:none;">
     💗 PRZEJDŹ DO ZAKUPU
   </a>
 </div>
@@ -994,38 +858,28 @@ id="scratchAppLink"
 <!-- NAJLEPSZA WYGRANA -->
 
 <div class="card best">
-
 🔥 Dzisiejsza najlepsza wygrana
-
 <strong id="bestPrize">[...]</strong>
-
 </div>
 
 <div class="card stats">
-
 <div class="stat">
 <b id="totalSpins">0</b>
 Losowań dzisiaj
 </div>
-
 <div class="stat">
 <b id="totalWins">0</b>
 Wygranych
 </div>
-
 <div class="stat">
 <b id="winRate">0%</b>
 Skuteczność
 </div>
-
 </div>
 
 <div class="card history">
-
 <h3>📊 Historia (ostatnie 5)</h3>
-
 <div id="historyList"></div>
-
 </div>
 
 <div class="note">
@@ -1051,24 +905,24 @@ Koło Fortuny © 2024 Julcia ♥ | Powodzenia w losowaniu! ✨
 </div>
 
 <script>
-// === USTAWIENIA ===
-const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 godziny
+// === WHEEL PRIZES ===
+const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PRIZES = [
-  { name: '🎁 Opakowanie PREMIUM', emoji: '✨', code: 'PREMIUM24' },
-  { name: '💝 Kod zniżkowy -20%', emoji: '💝', code: 'SALE20' },
-  { name: '🌸 Gratis próbka', emoji: '🌸', code: 'SAMPLE' },
-  { name: '🎀 Zestaw startowy', emoji: '🎀', code: 'STARTER' },
-  { name: '💎 Diamentowy pakiet', emoji: '💎', code: 'DIAMOND' },
-  { name: '🌟 Kod VIP', emoji: '🌟', code: 'VIP123' },
+  { name: '💝 -5%', emoji: '💝', code: 'SALE5' },
+  { name: '🎀 -10%', emoji: '🎀', code: 'SALE10' },
+  { name: '✨ -15%', emoji: '✨', code: 'SALE15' },
+  { name: '📦 Pakiet', emoji: '📦', code: 'PAKIET' },
+  { name: '🔄 Spróbuj ponownie', emoji: '🔄', code: 'RETRY', isRetry: true },
 ];
 
 // === DOM ELEMENTS ===
 const spinBtn = document.getElementById('spin');
 const wheelCanvas = document.getElementById('wheel');
-const resultDiv = document.getElementById('result');
+const scratchCanvas = document.getElementById('scratchCanvas');
 const resultModal = document.getElementById('resultModal');
 const closeModalBtn = document.getElementById('closeModal');
 const copyBtn = document.getElementById('copyBtn');
+const newScratchBtn = document.getElementById('newScratchBtn');
 const greetingDiv = document.getElementById('greeting');
 const historyList = document.getElementById('historyList');
 const totalSpinsSpan = document.getElementById('totalSpins');
@@ -1077,24 +931,25 @@ const winRateSpan = document.getElementById('winRate');
 const bestPrizeSpan = document.getElementById('bestPrize');
 const bigWheelCountdown = document.getElementById('bigWheelCountdown');
 const bigWheelTime = document.getElementById('bigWheelTime');
-const bigWheelSub = document.getElementById('bigWheelSub');
 const timerText = document.getElementById('timerText');
+const scratchMessage = document.getElementById('scratchMessage');
 
 // === STATE ===
 let isSpinning = false;
 let currentRotation = 0;
-let wheelRotationPerSpin = 0;
+let scratchCtx = null;
+let isDrawing = false;
 
 // === INITIALIZATION ===
 function init() {
   loadData();
   drawWheel();
+  initScratch();
   updateUI();
   setupEventListeners();
   updateCountdowns();
   setInterval(updateCountdowns, 1000);
   
-  // Set greeting
   const hour = new Date().getHours();
   if (hour < 12) greetingDiv.textContent = '🌅 Dzień dobry!';
   else if (hour < 18) greetingDiv.textContent = '🌤️ Dobry wieczór!';
@@ -1107,17 +962,13 @@ function drawWheel() {
   const centerX = wheelCanvas.width / 2;
   const centerY = wheelCanvas.height / 2;
   const radius = wheelCanvas.width / 2 - 20;
-
-  // Colors for wheel segments
-  const colors = ['#ff1493', '#ff5fbd', '#c40072', '#8a004e', '#ff8bd2', '#a80060'];
-
+  const colors = ['#ff1493', '#ff5fbd', '#c40072', '#8a004e', '#a80060'];
   const sliceAngle = (Math.PI * 2) / PRIZES.length;
 
   PRIZES.forEach((prize, i) => {
     const startAngle = i * sliceAngle;
     const endAngle = (i + 1) * sliceAngle;
 
-    // Draw segment
     ctx.fillStyle = colors[i % colors.length];
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
@@ -1125,7 +976,6 @@ function drawWheel() {
     ctx.closePath();
     ctx.fill();
 
-    // Draw text
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(startAngle + sliceAngle / 2);
@@ -1138,33 +988,113 @@ function drawWheel() {
   });
 }
 
+// === SCRATCH CARD ===
+function initScratch() {
+  scratchCtx = scratchCanvas.getContext('2d', { willReadFrequently: true });
+  
+  const dpr = window.devicePixelRatio || 1;
+  scratchCanvas.width = 700 * dpr;
+  scratchCanvas.height = 360 * dpr;
+  scratchCanvas.style.width = '700px';
+  scratchCanvas.style.height = '360px';
+  scratchCtx.scale(dpr, dpr);
+  
+  // Draw gray overlay
+  scratchCtx.fillStyle = '#cccccc';
+  scratchCtx.fillRect(0, 0, 700, 360);
+  
+  // Add scratch instructions
+  scratchCtx.fillStyle = 'rgba(0,0,0,0.3)';
+  scratchCtx.font = 'bold 16px Arial';
+  scratchCtx.textAlign = 'center';
+  scratchCtx.textBaseline = 'middle';
+  scratchCtx.fillText('Zdrap aby odkryć →', 350, 180);
+  
+  scratchCanvas.addEventListener('mousedown', startScratch);
+  scratchCanvas.addEventListener('mousemove', scratchCard);
+  scratchCanvas.addEventListener('mouseup', endScratch);
+  scratchCanvas.addEventListener('touchstart', startScratch);
+  scratchCanvas.addEventListener('touchmove', scratchCard);
+  scratchCanvas.addEventListener('touchend', endScratch);
+}
+
+function startScratch(e) {
+  isDrawing = true;
+}
+
+function scratchCard(e) {
+  if (!isDrawing) return;
+  
+  e.preventDefault();
+  const rect = scratchCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  
+  let x, y;
+  if (e.touches) {
+    x = (e.touches[0].clientX - rect.left) / (rect.width / 700);
+    y = (e.touches[0].clientY - rect.top) / (rect.height / 360);
+  } else {
+    x = (e.clientX - rect.left) / (rect.width / 700);
+    y = (e.clientY - rect.top) / (rect.height / 360);
+  }
+  
+  scratchCtx.clearRect(x - 20, y - 20, 40, 40);
+  
+  // Check if scratched enough
+  checkScratchComplete();
+}
+
+function endScratch() {
+  isDrawing = false;
+}
+
+function checkScratchComplete() {
+  const imageData = scratchCtx.getImageData(0, 0, 700, 360);
+  const data = imageData.data;
+  let transparentPixels = 0;
+  
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 128) transparentPixels++;
+  }
+  
+  const threshold = (data.length / 4) * 0.3;
+  if (transparentPixels > threshold) {
+    showScratchReward();
+  }
+}
+
+function showScratchReward() {
+  scratchCanvas.style.pointerEvents = 'none';
+  
+  const rewards = ['🎁 Gratis próbka', '💝 Zniżka 10%', '🎀 Bonus punkt', '✨ Voucher'];
+  const reward = rewards[Math.floor(Math.random() * rewards.length)];
+  
+  const scratchBuyBtn = document.getElementById('scratchBuyBtn');
+  scratchBuyBtn.style.display = 'block';
+  scratchMessage.textContent = `✨ ${reward} ✨`;
+}
+
 // === SPIN LOGIC ===
 function spin() {
-  if (isSpinning || !canSpin()) {
-    return;
-  }
+  if (isSpinning || !canSpin()) return;
 
   isSpinning = true;
   spinBtn.disabled = true;
 
-  // Random spin: 5-8 full rotations
   const extraRotation = Math.random() * 360;
   const fullRotations = 5 + Math.random() * 3;
   const targetRotation = currentRotation + fullRotations * 360 + extraRotation;
 
-  // Animate spin
   animateSpin(currentRotation, targetRotation);
 }
 
 function animateSpin(from, to) {
-  const duration = 5000; // 5 seconds
+  const duration = 5000;
   const startTime = Date.now();
 
   function animate() {
     const elapsed = Date.now() - startTime;
     const progress = Math.min(elapsed / duration, 1);
-
-    // Easing function (cubic easeOut)
     const easeProgress = 1 - Math.pow(1 - progress, 3);
 
     currentRotation = from + (to - from) * easeProgress;
@@ -1182,38 +1112,22 @@ function animateSpin(from, to) {
 
 function onSpinComplete(finalRotation) {
   isSpinning = false;
-
-  // Normalize rotation to 0-360
   const normalizedRotation = finalRotation % 360;
-  
-  // Calculate which segment is at the top (pointer position)
-  // The pointer is at 0 degrees (top), wheel segments start at -90 degrees
   const pointerDegrees = (360 - normalizedRotation + 90) % 360;
   const segmentIndex = Math.floor(pointerDegrees / (360 / PRIZES.length)) % PRIZES.length;
-
   const winningPrize = PRIZES[segmentIndex];
 
-  // Update data
-  const today = new Date().toLocaleDateString('pl-PL');
-  updateLastSpinTime();
-  
-  const spinData = {
-    prize: winningPrize.name,
-    code: winningPrize.code,
-    time: new Date().toLocaleTimeString('pl-PL'),
-  };
+  if (winningPrize.isRetry) {
+    showRetryResult();
+  } else {
+    updateLastSpinTime();
+    showResult(winningPrize);
+  }
 
-  let history = JSON.parse(localStorage.getItem('spinHistory')) || [];
-  history.unshift(spinData);
-  history = history.slice(0, 5);
-  localStorage.setItem('spinHistory', JSON.stringify(history));
-
-  // Show result
-  showResult(winningPrize);
   updateUI();
 }
 
-// === UI UPDATES ===
+// === RESULTS ===
 function showResult(prize) {
   const resultText = document.getElementById('resultText');
   const resultCode = document.getElementById('resultCode');
@@ -1225,7 +1139,6 @@ function showResult(prize) {
   
   resultModal.classList.add('show');
   
-  // Copy functionality
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(prize.code);
     copyBtn.textContent = '✓ SKOPIOWANE';
@@ -1234,19 +1147,28 @@ function showResult(prize) {
     }, 2000);
   };
 
-  // Add confetti
-  for (let i = 0; i < 30; i++) {
-    createConfetti();
-  }
+  for (let i = 0; i < 30; i++) createConfetti();
+  createFlash();
+}
 
-  // Flash effect
+function showRetryResult() {
+  const resultText = document.getElementById('resultText');
+  const resultCode = document.getElementById('resultCode');
+  
+  resultText.innerHTML = '<b>🔄 Spróbuj ponownie!</b><br><span style="font-size:12px">Nieszczęśliwie! Powodzenia następnym razem!</span>';
+  resultCode.style.display = 'none';
+  copyBtn.style.display = 'none';
+  
+  resultModal.classList.add('show');
+
+  for (let i = 0; i < 15; i++) createConfetti();
   createFlash();
 }
 
 function createConfetti() {
   const confetti = document.createElement('div');
   confetti.className = 'confetti';
-  confetti.textContent = ['🎉', '✨', '💝', '🎁', '🌸'][Math.floor(Math.random() * 5)];
+  confetti.textContent = ['🎉', '✨', '💝', '🎁'][Math.floor(Math.random() * 4)];
   
   const x = Math.random() * window.innerWidth;
   const y = Math.random() * window.innerHeight / 2;
@@ -1257,7 +1179,6 @@ function createConfetti() {
   confetti.style.setProperty('--y', -(Math.random() * 300 + 200) + 'px');
   
   document.body.appendChild(confetti);
-  
   setTimeout(() => confetti.remove(), 1200);
 }
 
@@ -1268,46 +1189,38 @@ function createFlash() {
   setTimeout(() => flash.remove(), 500);
 }
 
+// === UI ===
 function updateUI() {
-  const today = new Date().toLocaleDateString('pl-PL');
-  const todayData = JSON.parse(localStorage.getItem('todaySpinsData')) || {};
-  const spins = todayData[today] || { count: 0, wins: 0, prizes: [] };
-
-  totalSpinsSpan.textContent = spins.count;
-  totalWinsSpan.textContent = spins.wins;
-  winRateSpan.textContent = spins.count > 0 ? Math.round((spins.wins / spins.count) * 100) + '%' : '0%';
-
-  if (spins.prizes.length > 0) {
-    const lastPrize = spins.prizes[spins.prizes.length - 1];
-    bestPrizeSpan.textContent = lastPrize;
-  }
-
-  // Update history
   const history = JSON.parse(localStorage.getItem('spinHistory')) || [];
-  historyList.innerHTML = history.map(h => `
+  historyList.innerHTML = history.slice(0, 5).map(h => `
     <div class="history-item">
       <span><b>${h.prize}</b></span>
       <span>${h.time}</span>
     </div>
-  `).join('');
+  `).join('') || '<p style="color:#d7a5c7;">Brak historii</p>';
 
   checkSpinCooldown();
 }
 
-// === COOLDOWN LOGIC ===
+// === COOLDOWN ===
 function canSpin() {
   const lastSpinTime = localStorage.getItem('lastSpinTime');
   if (!lastSpinTime) return true;
-
-  const now = Date.now();
-  const lastSpin = parseInt(lastSpinTime);
-  const timePassed = now - lastSpin;
-
-  return timePassed >= SPIN_COOLDOWN_MS;
+  return (Date.now() - parseInt(lastSpinTime)) >= SPIN_COOLDOWN_MS;
 }
 
 function updateLastSpinTime() {
   localStorage.setItem('lastSpinTime', Date.now().toString());
+  
+  const spinData = {
+    prize: PRIZES[Math.floor(Math.random() * PRIZES.length)].name,
+    code: 'CODE',
+    time: new Date().toLocaleTimeString('pl-PL'),
+  };
+  
+  let history = JSON.parse(localStorage.getItem('spinHistory')) || [];
+  history.unshift(spinData);
+  localStorage.setItem('spinHistory', JSON.stringify(history.slice(0, 5)));
 }
 
 function checkSpinCooldown() {
@@ -1332,9 +1245,7 @@ function updateCountdowns() {
     return;
   }
 
-  const now = Date.now();
-  const lastSpin = parseInt(lastSpinTime);
-  const timeRemaining = SPIN_COOLDOWN_MS - (now - lastSpin);
+  const timeRemaining = SPIN_COOLDOWN_MS - (Date.now() - parseInt(lastSpinTime));
 
   if (timeRemaining <= 0) {
     spinBtn.disabled = false;
@@ -1351,14 +1262,8 @@ function updateCountdowns() {
   timerText.textContent = timeString;
 }
 
-// === DATA MANAGEMENT ===
 function loadData() {
-  const today = new Date().toLocaleDateString('pl-PL');
-  const todayData = JSON.parse(localStorage.getItem('todaySpinsData')) || {};
-  
-  if (!todayData[today]) {
-    todayData[today] = { count: 0, wins: 0, prizes: [] };
-  }
+  // Initialize if needed
 }
 
 // === EVENT LISTENERS ===
@@ -1366,6 +1271,10 @@ function setupEventListeners() {
   spinBtn.addEventListener('click', spin);
   closeModalBtn.addEventListener('click', () => {
     resultModal.classList.remove('show');
+  });
+  newScratchBtn.addEventListener('click', () => {
+    initScratch();
+    scratchMessage.textContent = 'Zdrap mnie! 💝';
   });
 }
 
