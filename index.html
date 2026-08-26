@@ -998,1133 +998,209 @@ id="scratchAppLink"
 🔥 Dzisiejsza najlepsza wygrana
 
 <strong id="bestPrize">
-Jeszcze nikt nie wygrał
+[...]
 </strong>
 
-</div>
-
-  <!-- HISTORIA -->
-
-<div class="card history">
-
-<h3>
-♥ Twoja ostatnia wygrana
-</h3>
-
-<div id="historyList">
-Brak losowań
-</div>
-
-</div>
-
-<div class="note">
-♥ Statystyki są zapisywane lokalnie na urządzeniu.
-Prawdziwe statystyki wszystkich użytkowników wymagają bazy danych. ♥
 </div>
 
 </div>
 </main>
 
-<!-- OKNO NAGRODY -->
-
-<div id="modal" class="modal">
-
-<div class="modal-box">
-
-<div id="mega">
-🎉💗🎁💗🎉
-</div>
-
-<div class="modal-title" id="modalTitle">
-♥ PAKIET ♥
-</div>
-
-<div class="modal-sub" id="modalSub"></div>
-
-<div id="modalCode"></div>
-
-<button id="closeModal" class="close" type="button">
-ZAMKNIJ ♥
-</button>
-
-</div>
+<div id="resultModal" class="modal">
+  <div class="modal-box">
+    <div id="mega">✨</div>
+    <div class="modal-title" id="resultTitle">GRATULACJE! 🎉</div>
+    <div class="modal-sub" id="resultMessage">Wygrana</div>
+    <button type="button" class="close" onclick="closeModal()">OK</button>
+  </div>
 </div>
 
 <script>
-(function(){
-
-"use strict";
-
-/* ELEMENTY */
-
-var canvas=document.getElementById("wheel");
-var ctx=canvas.getContext("2d");
-
-var btn=document.getElementById("spin");
-var result=document.getElementById("result");
-var timer=document.getElementById("timer");
-
-var shareBtn=document.getElementById("shareBtn");
-var claimBonusBtn=document.getElementById("claimBonusBtn");
-var shareCountEl=document.getElementById("shareCount");
-var shareProgress=document.getElementById("shareProgress");
-var shareNote=document.getElementById("shareNote");
-
-var modal=document.getElementById("modal");
-var box=modal.querySelector(".modal-box");
-
-var modalTitle=document.getElementById("modalTitle");
-var modalSub=document.getElementById("modalSub");
-var modalCode=document.getElementById("modalCode");
-
-var greeting=document.getElementById("greeting");
-
-/* NAGRODY */
-
-var prizes=[
-
-{
-name:"PAKIET",
-emoji:"🎁",
-color:"#ff1493",
-weight:2,
-code:"PAKIET"
-},
-
-{
-name:"ZNIŻKA 15%",
-emoji:"💗",
-color:"#8b0053",
-weight:8,
-code:"HEART15"
-},
-
-{
-name:"SPRÓBUJ PONOWNIE",
-emoji:"♥",
-color:"#25091f",
-weight:18
-},
-
-{
-name:"ZNIŻKA 10%",
-emoji:"💗",
-color:"#d40078",
-weight:12,
-code:"HEART10"
-},
-
-{
-name:"SPRÓBUJ PONOWNIE",
-emoji:"♥",
-color:"#3a0b2d",
-weight:18
-},
-
-{
-name:"ZNIŻKA 5%",
-emoji:"💗",
-color:"#ff4db8",
-weight:17,
-code:"HEART05"
-},
-
-{
-name:"SPRÓBUJ PONOWNIE",
-emoji:"♥",
-color:"#210718",
-weight:17
-},
-
-{
-name:"ZNIŻKA 10%",
-emoji:"💗",
-color:"#a80060",
-weight:8,
-code:"HEART10"
-}
-
+// Prizes list - customize these!
+const prizes = [
+  '10% zniżki',
+  'Darmowa próbka',
+  '20% zniżki',
+  'Losuj ponownie',
+  '30% zniżki',
+  'Specjalny kod',
+  '15% zniżki',
+  'Bonus produkt'
 ];
 
-/* USTAWIENIA */
-
-var TAU=Math.PI*2;
-var part=TAU/prizes.length;
-
-var rotation=0;
-var spinning=false;
-
-var KEY="julcia_kolo_fortuny_v6";
-  var DAY=86400000;
-
-/* PAMIĘĆ */
-
-function getState(){
-
-try{
-
-return JSON.parse(
-localStorage.getItem(KEY) ||
-'{"last":0,"spins":0,"wins":0,"history":[],"best":"—","shareCount":0,"bonusSpins":0,"bonusClaimed":false}'
-);
-
-}catch(e){
-
-return{
-last:0,
-spins:0,
-wins:0,
-history:[],
-best:"—",
-shareCount:0,
-bonusSpins:0,
-bonusClaimed:false
-};
-
-}
-
-}
-
-function saveState(s){
-
-localStorage.setItem(KEY,JSON.stringify(s));
-
-}
-
-/* RYSOWANIE KOŁA */
-
-function draw(){
-
-var c=450;
-var r=434;
-
-ctx.clearRect(0,0,900,900);
-
-for(var i=0;i<prizes.length;i++){
-
-var a=rotation+i*part;
-var b=a+part;
-
-ctx.beginPath();
-ctx.moveTo(c,c);
-ctx.arc(c,c,r,a,b);
-ctx.closePath();
-
-ctx.fillStyle=prizes[i].color;
-ctx.fill();
-
-ctx.strokeStyle="rgba(255,255,255,.86)";
-ctx.lineWidth=7;
-ctx.stroke();
-
-ctx.save();
-
-ctx.translate(c,c);
-ctx.rotate(a+part/2);
-
-ctx.textAlign="right";
-ctx.fillStyle="#fff";
-
-ctx.shadowColor="#ff1493";
-ctx.shadowBlur=10;
-
-ctx.font=
-prizes[i].name==="SPRÓBUJ PONOWNIE"
-?
-"900 21px Arial"
-:
-"900 28px Arial";
-
-ctx.fillText(
-prizes[i].name,
-r-30,
-8
-);
-
-ctx.restore();
-
-}
-
-/* OBWÓDKA */
-
-ctx.beginPath();
-
-ctx.arc(c,c,r,0,TAU);
-
-ctx.strokeStyle="#fff";
-ctx.lineWidth=9;
-
-ctx.shadowColor="#ff1493";
-ctx.shadowBlur=18;
-
-ctx.stroke();
-
-ctx.shadowBlur=0;
-
-}
-
-/* LOSOWANIE */
-
-function choose(){
-
-var total=0;
-var n;
-
-for(var i=0;i<prizes.length;i++){
-
-total+=prizes[i].weight;
-
-}
-
-n=Math.random()*total;
-
-for(var j=0;j<prizes.length;j++){
-
-n-=prizes[j].weight;
-
-if(n<=0){
-
-return j;
-
-}
-
-}
-
-return prizes.length-1;
-
-}
-
-/* NORMALIZACJA KĄTA */
-
-function norm(a){
-
-return ((a%TAU)+TAU)%TAU;
-
-}
-
-/* DODATKOWY LOS ZA UDOSTĘPNIENIA */
-
-var SHARE_TARGET=15;
-var SHARE_URL="https://t.me/share/url?url=https://t.me/KoloFortunyBot&text=Darmowe%20ko%C5%82o%20fortuny%20z%20pakietami%2018%2B%20dla%20ka%C5%BCdego%20co%2024h%F0%9F%91%86%E2%99%A5%EF%B8%8F";
-
-/* USTAWIENIA */
-
-function updateShareUI(){
-  var s=getState();
-  var count=Math.min(Number(s.shareCount)||0,SHARE_TARGET);
-  var pct=(count/SHARE_TARGET)*100;
-
-  shareCountEl.textContent=count+" / "+SHARE_TARGET+" osób";
-  shareProgress.style.width=pct+"%";
-
-  shareBtn.disabled=count>=SHARE_TARGET || s.bonusClaimed;
-  shareBtn.textContent=count>=SHARE_TARGET
-    ? "✓ 15 UDOSTĘPNIEŃ GOTOWE"
-    : "📤 UDOSTĘPNIJ NA TELEGRAMIE";
-
-  claimBonusBtn.disabled=!(count>=SHARE_TARGET && !s.bonusClaimed);
-
-  if(s.bonusClaimed){
-    claimBonusBtn.textContent="✓ +1 LOS JUŻ ODEBRANY";
-    shareNote.textContent="Bonus został już wykorzystany. ♥";
-  }else if(count>=SHARE_TARGET){
-    shareNote.textContent="Gotowe! Odbierz teraz swój dodatkowy los. 🎁";
-  }else{
-    shareNote.textContent="";
-  }
-}
-
-function openTelegramShare(){
-  if(window.Telegram && Telegram.WebApp && Telegram.WebApp.openTelegramLink){
-    Telegram.WebApp.openTelegramLink(SHARE_URL);
-  }else{
-    window.open(SHARE_URL,"_blank","noopener,noreferrer");
-  }
-}
-
-shareBtn.addEventListener("click",function(){
-  var s=getState();
-
-  if(s.bonusClaimed || s.shareCount>=SHARE_TARGET){
-    updateShareUI();
-    return;
-  }
-
-  /*
-   * Telegram Share URL nie zwraca do mini-apki informacji,
-   * czy wiadomość została faktycznie wysłana.
-   * Dlatego ten licznik oznacza otwarcia procesu udostępniania.
-   */
-  s.shareCount=(Number(s.shareCount)||0)+1;
-  saveState(s);
-  updateShareUI();
-  openTelegramShare();
+// Wheel state
+let isSpinning = false;
+let rotation = 0;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  drawWheel();
+  document.getElementById('spin').addEventListener('click', spinWheel);
+  setGreeting();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
 });
 
-claimBonusBtn.addEventListener("click",function(){
-  var s=getState();
+// Draw the wheel
+function drawWheel() {
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const radius = 350;
+  
+  const sliceAngle = (Math.PI * 2) / prizes.length;
+  
+  prizes.forEach((prize, index) => {
+    const startAngle = index * sliceAngle + rotation;
+    const endAngle = startAngle + sliceAngle;
+    
+    // Draw slice background
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = index % 2 === 0 ? '#ff1493' : '#ff5fbd';
+    ctx.fill();
+    
+    // Draw slice border
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Draw text
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(startAngle + sliceAngle / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText(prize, radius - 40, 10);
+    ctx.restore();
+  });
+}
 
-  if(s.shareCount<SHARE_TARGET || s.bonusClaimed)return;
+// Spin the wheel
+function spinWheel() {
+  if (isSpinning) return;
+  
+  isSpinning = true;
+  document.getElementById('spin').disabled = true;
+  
+  const spins = 5 + Math.random() * 5;
+  const randomDegree = Math.random() * 360;
+  const totalRotation = spins * 360 + randomDegree;
+  
+  let currentRotation = 0;
+  const duration = 3000; // 3 seconds
+  const startTime = Date.now();
+  
+  const animate = () => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Ease out cubic
+    const easeProgress = 1 - Math.pow(1 - progress, 3);
+    currentRotation = totalRotation * easeProgress;
+    
+    rotation = (currentRotation * Math.PI / 180) % (Math.PI * 2);
+    
+    const canvas = document.getElementById('wheel');
+    canvas.style.transform = `rotate(${currentRotation}deg)`;
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // Determine winner
+      const winnerIndex = Math.floor((prizes.length - (randomDegree / 360) * prizes.length) % prizes.length);
+      showResult(prizes[winnerIndex], winnerIndex);
+      
+      isSpinning = false;
+      document.getElementById('spin').disabled = false;
+    }
+  };
+  
+  animate();
+}
 
-  s.bonusSpins=(Number(s.bonusSpins)||0)+1;
-  s.bonusClaimed=true;
-  saveState(s);
+// Show result modal
+function showResult(prize, index) {
+  const isMega = Math.random() < 0.2; // 20% chance for mega prize
+  const modal = document.getElementById('resultModal');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMessage = document.getElementById('resultMessage');
+  
+  if (isMega) {
+    modal.classList.add('mega');
+    resultTitle.textContent = '🎊 MEGA WYGRANA! 🎊';
+  } else {
+    modal.classList.remove('mega');
+    resultTitle.textContent = 'GRATULACJE! 🎉';
+  }
+  
+  resultMessage.textContent = prize;
+  modal.classList.add('show');
+  
+  // Confetti
+  createConfetti();
+}
 
-  claimBonusBtn.textContent="✓ +1 LOS DODANY";
-  shareNote.textContent="Masz dodatkowy los! Możesz zakręcić kołem. 🎁";
-  updateShareUI();
-  updateUI();
+function closeModal() {
+  document.getElementById('resultModal').classList.remove('show');
+}
+
+// Create confetti
+function createConfetti() {
+  const colors = ['♥', '💗', '✨'];
+  for (let i = 0; i < 20; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.textContent = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.top = '-30px';
+    confetti.style.setProperty('--x', (Math.random() - 0.5) * 200 + 'px');
+    confetti.style.setProperty('--y', Math.random() * 300 + 'px');
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => confetti.remove(), 1150);
+  }
+}
+
+// Greeting based on time
+function setGreeting() {
+  const hour = new Date().getHours();
+  let greeting = '';
+  
+  if (hour < 12) greeting = 'Dzień dobry! ☀️';
+  else if (hour < 18) greeting = 'Popołudnie! 😊';
+  else greeting = 'Dobry wieczór! 🌙';
+  
+  document.getElementById('greeting').textContent = greeting;
+}
+
+// Update countdown timer
+function updateCountdown() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  
+  const diff = tomorrow - now;
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  
+  const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  document.getElementById('bigWheelTime').textContent = timeString;
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('resultModal');
+  if (e.target === modal) {
+    closeModal();
+  }
 });
-
-/* AKTUALIZACJA INFORMACJI */
-
-function updateUI(){
-
-  var s=getState();
-
-  updateShareUI();
-
-  var left=DAY-(Date.now()-(Number(s.last)||0));
-
-  if(!s.last || left<=0 || (Number(s.bonusSpins)||0)>0){
-
-    btn.disabled=false;
-    btn.textContent=(Number(s.bonusSpins)||0)>0
-      ? "🎁 ZAKRĘĆ DODATKOWYM LOSEM"
-      : "♥ ZAKRĘĆ KOŁEM ♥";
-
-    timer.className="card timer";
-    timer.innerHTML="";
-    return;
-  }
-
-  btn.disabled=true;
-  btn.textContent="♥ WRÓĆ PÓŹNIEJ ♥";
-
-  timer.className="card timer show";
-
-  var sec=Math.ceil(left/1000);
-  var h=Math.floor(sec/3600);
-  var m=Math.floor((sec%3600)/60);
-  var ss=sec%60;
-
-  timer.innerHTML=
-    "Następne losowanie za:"+
-    "<strong>"+
-    String(h).padStart(2,"0")+":"+
-    String(m).padStart(2,"0")+":"+
-    String(ss).padStart(2,"0")+
-    "</strong>";
-}
-
-/* DŹWIĘK */
-
-function sound(kind){
-
-try{
-
-var AC=
-window.AudioContext ||
-window.webkitAudioContext;
-
-if(!AC)return;
-
-var ac=new AC();
-
-var o=ac.createOscillator();
-var g=ac.createGain();
-
-o.connect(g);
-g.connect(ac.destination);
-
-o.type="sine";
-
-o.frequency.value=
-kind==="win"
-?
-660
-:
-220;
-
-g.gain.value=.045;
-
-o.start();
-
-o.frequency.exponentialRampToValueAtTime(
-kind==="win"?990:520,
-ac.currentTime+.18
-);
-
-g.gain.exponentialRampToValueAtTime(
-.001,
-ac.currentTime+.22
-);
-
-o.stop(ac.currentTime+.23);
-
-}catch(e){}
-
-}
-
-/* BŁYSK */
-
-function flash(){
-
-var f=document.createElement("div");
-
-f.className="flash";
-
-document.body.appendChild(f);
-
-setTimeout(function(){
-
-f.remove();
-
-},500);
-
-}
-
-/* KONFETTI */
-
-function celebrate(mega){
-
-var chars=
-mega
-?
-["♥","♥","♡","💗","🎁","✨","💗"]
-:
-["♥","♡","💗","✨"];
-
-var count=mega?48:24;
-
-for(var i=0;i<count;i++){
-
-var e=document.createElement("div");
-
-e.className="confetti";
-
-e.textContent=
-chars[
-Math.floor(
-Math.random()*chars.length
-)
-];
-
-e.style.left="50%";
-e.style.top="48%";
-
-e.style.color=
-i%2
-?
-"#ff8bd2"
-:
-"#ff1493";
-
-e.style.setProperty(
-"--x",
-(Math.random()*520-260)+"px"
-);
-
-e.style.setProperty(
-"--y",
-(Math.random()*520-260)+"px"
-);
-
-document.body.appendChild(e);
-
-setTimeout(
-(function(el){
-
-return function(){
-
-el.remove();
-
-};
-
-})(e),
-1250
-);
-
-}
-
-}
-
-/* OKNO NAGRODY */
-
-function showModal(p){
-
-var mega=p.name==="PAKIET";
-
-box.className=
-mega
-?
-"modal-box mega"
-:
-"modal-box";
-
-modalTitle.textContent=
-mega
-?
-"🎁 ♥ PAKIET ♥"
-:
-p.emoji+" "+p.name;
-
-modalSub.textContent=
-mega
-?
-"JESTEŚ SZCZĘŚCIARĄ! To Twoja najlepsza nagroda! ♥"
-:
-p.name==="SPRÓBUJ PONOWNIE"
-?
-"Tym razem bez nagrody — spróbuj ponownie jutro ♥"
-:
-"Twój rabat jest gotowy ♥";
-
-if(p.code){
-
-modalCode.innerHTML=
-`
-<div class="code">${p.code}</div>
-
-<button
-type="button"
-class="copy"
-id="copyBtn"
->
-KOPIUJ KOD ♥
-</button>
-`;
-
-document.getElementById("copyBtn").onclick=function(){
-
-if(navigator.clipboard){
-
-navigator.clipboard.writeText(p.code);
-
-}
-
-this.textContent="✓ SKOPIOWANO ♥";
-
-this.classList.add("copied");
-
-};
-
-}else{
-
-modalCode.innerHTML="";
-
-}
-
-modal.className="modal show";
-
-if(mega){
-
-flash();
-celebrate(true);
-sound("win");
-
-}else{
-
-celebrate(false);
-
-}
-
-}
-
-/* POKAZANIE WYNIKU */
-
-function showResult(p){
-
-result.innerHTML=
-`
-<div class="big">${p.emoji}</div>
-
-<div class="won">
-WYNIK LOSOWANIA
-</div>
-
-<div class="prize">
-${p.name}
-</div>
-`;
-
-if(p.code){
-
-result.innerHTML+=
-`
-<div class="code">
-${p.code}
-</div>
-
-<div style="font-size:11px;color:#d9a6c8">
-Kod możesz skopiować w oknie nagrody ♥
-</div>
-`;
-
-}
-
-result.className="card result show";
-
-showModal(p);
-
-}
-
-/* KRĘCENIE */
-
-function spin(){
-
-if(spinning)return;
-
-var s=getState();
-
-var usingBonus=(Number(s.bonusSpins)||0)>0;
-
-spinning=true;
-
-btn.disabled=true;
-
-sound("spin");
-
-var winner=choose();
-
-if(usingBonus){
-  s.bonusSpins=Math.max(0,(Number(s.bonusSpins)||0)-1);
-  saveState(s);
-}
-
-var target=
-winner*part+
-part/2;
-
-var pointer=-Math.PI/2;
-
-var current=norm(rotation);
-
-var diff=
-norm(pointer-target)-
-current;
-
-if(diff<0){
-
-diff+=TAU;
-
-}
-
-var start=rotation;
-
-var finish=
-rotation+
-diff+
-(5+Math.floor(Math.random()*3))*TAU;
-
-var duration=5200;
-
-var t0=performance.now();
-
-function frame(now){
-
-var p=
-Math.min(
-(now-t0)/duration,
-1
-);
-
-var ease=
-1-Math.pow(1-p,4);
-
-rotation=
-start+
-(finish-start)*ease;
-
-draw();
-
-if(p<1){
-
-requestAnimationFrame(frame);
-
-}else{
-
-rotation=finish;
-
-draw();
-
-var prize=prizes[winner];
-
-var d=new Date();
-
-s.spins++;
-
-if(
-prize.name!=="SPRÓBUJ PONOWNIE"
-){
-
-s.wins++;
-
-if(
-prize.name==="PAKIET" ||
-s.best==="—" ||
-(
-prize.name==="ZNIŻKA 15%" &&
-s.best!=="PAKIET"
-)
-){
-
-s.best=prize.name;
-
-}
-
-}
-
-s.history.unshift({
-
-prize:prize.name,
-
-date:
-d.toLocaleDateString("pl-PL")
-+
-" "
-+
-d.toLocaleTimeString(
-"pl-PL",
-{
-hour:"2-digit",
-minute:"2-digit"
-}
-)
-
-});
-
-s.history=s.history.slice(0,5);
-
-saveState(s);
-
-setTimeout(function(){
-
-showResult(prize);
-
-spinning=false;
-
-updateUI();
-
-},280);
-
-}
-
-}
-
-requestAnimationFrame(frame);
-
-}
-
-/* ZAMYKANIE */
-
-document.getElementById("closeModal").onclick=function(){
-
-modal.className="modal";
-
-box.className="modal-box";
-
-};
-
-modal.onclick=function(e){
-
-if(e.target===modal){
-
-modal.className="modal";
-
-box.className="modal-box";
-
-}
-
-};
-
-/* ZDRAPKA — 1 RAZ NA 24H */
-
-var scratchCanvas=document.getElementById("scratchCanvas");
-var scratchCtx=scratchCanvas.getContext("2d");
-var scratchMessage=document.getElementById("scratchMessage");
-var newScratchBtn=document.getElementById("newScratchBtn");
-var scratchBuyBtn=document.getElementById("scratchBuyBtn");
-var scratchTimer=document.getElementById("scratchTimer");
-
-var SCRATCH_DAY=86400000;
-var SCRATCH_KEY="julcia_scratch_v1";
-var scratchDrawing=false;
-var scratchRevealed=0;
-
-var scratchTexts=[
-  "🔥 To Twoje zaproszenie do zakupu pakieciku — sprawdź go już teraz 😘",
-  "💋 Zdrapane! Teraz zapraszam Cię gorąco do zakupu pakieciku 🥵",
-  "😏 To znak, żeby zajrzeć do pakieciku — zapraszam do zakupu ❤️",
-  "🔥 Odkryłaś wiadomość — teraz czas na Twój pakiecik 😘",
-  "💗 Pakiecik już czeka — zapraszam Cię do zakupu 😏",
-  "🥵 Nie kończ na zdrapaniu — zajrzyj po swój pakiecik 🔥",
-  "😘 To specjalne zaproszenie do zakupu — pakiecik czeka!",
-  "💋 Ciekawość już rozbudzona? Sprawdź i kup swój pakiecik 🔥",
-  "😈 Zdrapane! Teraz możesz zrobić kolejny krok — zapraszam do zakupu",
-  "🔥 Twoje zaproszenie jest odkryte — pakiecik czeka właśnie na Ciebie 😘"
-];
-
-function getScratchState(){
-  try{
-    return JSON.parse(localStorage.getItem(SCRATCH_KEY)||'{"last":0}');
-  }catch(e){
-    return {last:0};
-  }
-}
-
-function saveScratchState(s){
-  localStorage.setItem(SCRATCH_KEY,JSON.stringify(s));
-}
-
-function scratchAvailable(){
-  var s=getScratchState();
-  return !s.last || Date.now()-Number(s.last)>=SCRATCH_DAY;
-}
-
-function formatScratchTime(left){
-  var sec=Math.max(0,Math.ceil(left/1000));
-  var h=Math.floor(sec/3600);
-  var m=Math.floor((sec%3600)/60);
-  var ss=sec%60;
-  return String(h).padStart(2,"0")+":"+
-         String(m).padStart(2,"0")+":"+
-         String(ss).padStart(2,"0");
-}
-
-function updateScratchTimer(){
-  var s=getScratchState();
-  var left=SCRATCH_DAY-(Date.now()-(Number(s.last)||0));
-
-  if(!s.last || left<=0){
-    scratchTimer.innerHTML="✨ Nowa zdrapka jest już dostępna!";
-    newScratchBtn.disabled=false;
-    newScratchBtn.textContent="✨ ZDRAP NOWĄ KARTĘ";
-    return;
-  }
-
-  scratchTimer.innerHTML="Następna zdrapka dostępna za:<strong>"+
-    formatScratchTime(left)+"</strong>";
-
-  newScratchBtn.disabled=true;
-  newScratchBtn.textContent="♥ WRÓĆ JUTRO PO NOWĄ ZDRAPKĘ ♥";
-}
-
-function initScratch(){
-  if(!scratchAvailable()){
-    scratchCanvas.style.pointerEvents="none";
-    scratchBuyBtn.style.display="none";
-    scratchMessage.textContent="💗 Zdrapka została już wykorzystana. Wróć jutro po kolejną niespodziankę 😘";
-    updateScratchTimer();
-    return;
-  }
-
-  scratchCanvas.style.pointerEvents="auto";
-  scratchBuyBtn.style.display="none";
-  scratchRevealed=0;
-
-  scratchMessage.textContent=
-    scratchTexts[Math.floor(Math.random()*scratchTexts.length)];
-
-  scratchCtx.globalCompositeOperation="source-over";
-  scratchCtx.clearRect(0,0,scratchCanvas.width,scratchCanvas.height);
-
-  /* wielowarstwowa, metaliczna powierzchnia */
-  var g=scratchCtx.createLinearGradient(0,0,scratchCanvas.width,scratchCanvas.height);
-  g.addColorStop(0,"#ffb1df");
-  g.addColorStop(.12,"#e84a9f");
-  g.addColorStop(.34,"#8e185f");
-  g.addColorStop(.5,"#ff71c1");
-  g.addColorStop(.67,"#861352");
-  g.addColorStop(.88,"#f15bab");
-  g.addColorStop(1,"#741044");
-  scratchCtx.fillStyle=g;
-  scratchCtx.fillRect(0,0,scratchCanvas.width,scratchCanvas.height);
-
-  /* metaliczne pasma */
-  for(var i=0;i<28;i++){
-    scratchCtx.fillStyle="rgba(255,255,255,"+(0.025+Math.random()*0.055)+")";
-    scratchCtx.fillRect(0,i*14,scratchCanvas.width,Math.random()*4+1);
-  }
-
-  scratchCtx.fillStyle="rgba(255,255,255,.95)";
-  scratchCtx.font="900 34px Arial";
-  scratchCtx.textAlign="center";
-  scratchCtx.textBaseline="middle";
-  scratchCtx.shadowColor="#ff1493";
-  scratchCtx.shadowBlur=14;
-  scratchCtx.fillText("ZDRAP MNIE ♥",scratchCanvas.width/2,scratchCanvas.height/2);
-  scratchCtx.shadowBlur=0;
-
-  scratchCtx.globalCompositeOperation="destination-out";
-  updateScratchTimer();
-}
-
-function scratchAt(x,y){
-  scratchCtx.beginPath();
-  scratchCtx.arc(x,y,30,0,Math.PI*2);
-  scratchCtx.fill();
-
-  scratchRevealed++;
-
-  if(scratchRevealed>=55){
-    scratchCanvas.style.pointerEvents="none";
-
-    var s=getScratchState();
-    s.last=Date.now();
-    saveScratchState(s);
-
-    scratchBuyBtn.style.display="block";
-    updateScratchTimer();
-    celebrate(false);
-  }
-}
-
-function scratchStart(e){
-  if(!scratchAvailable())return;
-  scratchDrawing=true;
-  scratchMove(e);
-}
-
-function scratchMove(e){
-  if(!scratchDrawing)return;
-
-  var r=scratchCanvas.getBoundingClientRect();
-  var point=e.touches ? e.touches[0] : e;
-
-  var x=(point.clientX-r.left)*(scratchCanvas.width/r.width);
-  var y=(point.clientY-r.top)*(scratchCanvas.height/r.height);
-
-  scratchAt(x,y);
-}
-
-function scratchEnd(){
-  scratchDrawing=false;
-}
-
-scratchCanvas.addEventListener("mousedown",scratchStart);
-scratchCanvas.addEventListener("mousemove",scratchMove);
-window.addEventListener("mouseup",scratchEnd);
-
-scratchCanvas.addEventListener("touchstart",function(e){
-  e.preventDefault();
-  scratchStart(e);
-},{passive:false});
-
-scratchCanvas.addEventListener("touchmove",function(e){
-  e.preventDefault();
-  scratchMove(e);
-},{passive:false});
-
-scratchCanvas.addEventListener("touchend",scratchEnd);
-
-newScratchBtn.addEventListener("click",function(){
-  if(scratchAvailable())initScratch();
-});
-
-initScratch();
-
-/* małe świecące serduszka przelatujące co jakiś czas */
-function spawnHeart(){
-  var h=document.createElement("div");
-  h.className="heart-fly";
-  h.textContent=Math.random()>.5 ? "♥" : "♡";
-  h.style.left=(5+Math.random()*90)+"vw";
-  h.style.fontSize=(10+Math.random()*13)+"px";
-  h.style.setProperty("--drift",(Math.random()*110-55)+"px");
-  h.style.animationDuration=(8+Math.random()*7)+"s";
-  document.body.appendChild(h);
-
-  setTimeout(function(){h.remove();},16000);
-}
-
-setInterval(spawnHeart,2200);
-setTimeout(spawnHeart,900);
-
-/* PRZYCISK */
-
-btn.addEventListener(
-"click",
-spin
-);
-
-/* TELEGRAM */
-
-try{
-
-if(
-window.Telegram &&
-Telegram.WebApp
-){
-
-Telegram.WebApp.ready();
-
-Telegram.WebApp.expand();
-
-var u=
-Telegram.WebApp.initDataUnsafe &&
-Telegram.WebApp.initDataUnsafe.user;
-
-if(u){
-
-greeting.textContent=
-"Cześć, "+
-(u.first_name||"♥")+
-" ♥";
-
-}
-
-}
-
-}catch(e){}
-
-/* START */
-
-draw();
-
-updateUI();
-
-setInterval(
-updateUI,
-1000
-);
-
-})();
-
-/* DUŻY LICZNIK KOŁA — 24H */
-var bigWheelTime=document.getElementById("bigWheelTime");
-var bigWheelSub=document.getElementById("bigWheelSub");
-
-function formatBigTime(left){
-  var sec=Math.max(0,Math.ceil(left/1000));
-  var h=Math.floor(sec/3600);
-  var m=Math.floor((sec%3600)/60);
-  var s=sec%60;
-  return String(h).padStart(2,"0")+":"+
-         String(m).padStart(2,"0")+":"+
-         String(s).padStart(2,"0");
-}
-
-function updateBigWheelCountdown(){
-  if(!bigWheelTime)return;
-
-  var st=getState();
-  var last=Number(st.last)||0;
-  var left=86400000-(Date.now()-last);
-
-  if(!last || left<=0){
-    bigWheelTime.textContent="00:00:00";
-    bigWheelSub.textContent="♥ Możesz już zakręcić kołem!";
-    return;
-  }
-
-  bigWheelTime.textContent=formatBigTime(left);
-  bigWheelSub.textContent="Pozostały czas do kolejnego zakręcenia";
-}
-
-updateBigWheelCountdown();
-setInterval(updateBigWheelCountdown,1000);
-
 </script>
 
 </body>
