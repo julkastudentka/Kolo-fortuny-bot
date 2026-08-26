@@ -814,6 +814,52 @@ button:active{
   }
 }
 
+
+/* DUŻY LICZNIK KOŁA */
+.big-wheel-countdown{
+  margin:18px 0 22px;
+  padding:22px 14px 20px;
+  text-align:center;
+  border:1px solid rgba(255,95,189,.72);
+  background:
+    radial-gradient(circle at 50% 0%,rgba(255,95,189,.22),transparent 52%),
+    linear-gradient(145deg,rgba(42,5,30,.98),rgba(8,2,11,.98));
+  box-shadow:
+    0 0 10px rgba(255,20,147,.55),
+    0 0 32px rgba(255,20,147,.25),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -18px 35px rgba(0,0,0,.35);
+}
+
+.countdown-label{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1.6px;
+  color:#ffd2ee;
+  text-shadow:0 0 9px rgba(255,20,147,.8);
+  margin-bottom:8px;
+}
+
+.big-wheel-time{
+  font-variant-numeric:tabular-nums;
+  font-size:clamp(42px,13vw,74px);
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:3px;
+  color:#fff;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 14px #ff8bd2,
+    0 0 30px #ff1493,
+    0 0 52px rgba(255,20,147,.65);
+  margin:8px 0 9px;
+}
+
+.countdown-sub{
+  font-size:12px;
+  color:#dba9c8;
+}
+
 </style>
 </head>
 
@@ -914,6 +960,14 @@ id="scratchAppLink"
 </a>
 
 
+
+<!-- DUŻY LICZNIK DO KOLEJNEGO LOSOWANIA -->
+<div id="bigWheelCountdown" class="card big-wheel-countdown">
+  <div class="countdown-label">🎡 NASTĘPNE LOSOWANIE KOŁA</div>
+  <div id="bigWheelTime" class="big-wheel-time">24:00:00</div>
+  <div id="bigWheelSub" class="countdown-sub">Pozostały czas do kolejnego zakręcenia</div>
+</div>
+
 <!-- ZDRAPKA -->
 <div id="zdrapka" class="card scratch-card">
   <div class="share-title">🎁 ZDRAP I ODKRYJ</div>
@@ -928,7 +982,7 @@ id="scratchAppLink"
     ✨ NOWA ZDRAPKA
   </button>
 
-  <a id="scratchBuyBtn" class="link" href="https://t.me/" target="_blank" rel="noopener noreferrer" style="display:none">
+  <a id="scratchBuyBtn" class="link" href="https://t.me/saskaj?text=Chc%C4%99%20kupi%C4%87%20pakiecik%20%F0%9F%98%98" target="_blank" rel="noopener noreferrer" style="display:none">
     💗 PRZEJDŹ DO ZAKUPU
   </a>
 </div>
@@ -2036,6 +2090,41 @@ updateUI,
 );
 
 })();
+
+/* DUŻY LICZNIK KOŁA — 24H */
+var bigWheelTime=document.getElementById("bigWheelTime");
+var bigWheelSub=document.getElementById("bigWheelSub");
+
+function formatBigTime(left){
+  var sec=Math.max(0,Math.ceil(left/1000));
+  var h=Math.floor(sec/3600);
+  var m=Math.floor((sec%3600)/60);
+  var s=sec%60;
+  return String(h).padStart(2,"0")+":"+
+         String(m).padStart(2,"0")+":"+
+         String(s).padStart(2,"0");
+}
+
+function updateBigWheelCountdown(){
+  if(!bigWheelTime)return;
+
+  var st=getState();
+  var last=Number(st.last)||0;
+  var left=86400000-(Date.now()-last);
+
+  if(!last || left<=0){
+    bigWheelTime.textContent="00:00:00";
+    bigWheelSub.textContent="♥ Możesz już zakręcić kołem!";
+    return;
+  }
+
+  bigWheelTime.textContent=formatBigTime(left);
+  bigWheelSub.textContent="Pozostały czas do kolejnego zakręcenia";
+}
+
+updateBigWheelCountdown();
+setInterval(updateBigWheelCountdown,1000);
+
 </script>
 
 </body>
