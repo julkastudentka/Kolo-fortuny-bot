@@ -777,14 +777,22 @@ Koło Fortuny © 2024 Julcia ♥ | Powodzenia w losowaniu! ✨
 
 <script>
 // === WHEEL PRIZES ===
+// Updated rewards and weights — "Pakiet" is rare
 const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PRIZES = [
-  { name: '💝 -5%', emoji: '💝', code: 'SALE5' },
-  { name: '🎀 -10%', emoji: '🎀', code: 'SALE10' },
-  { name: '✨ -15%', emoji: '✨', code: 'SALE15' },
-  { name: '📦 Pakiet', emoji: '📦', code: 'PAKIET' },
-  { name: '🔄 Spróbuj ponownie', emoji: '🔄', code: 'RETRY', isRetry: true },
+  { name: '5%', emoji: '💝', code: 'SALE5', weight: 0.35 },
+  { name: '10%', emoji: '🎀', code: 'SALE10', weight: 0.30 },
+  { name: '15%', emoji: '✨', code: 'SALE15', weight: 0.25 },
+  { name: 'Pakiet', emoji: '📦', code: 'PAKIET', weight: 0.05, rare: true },
+  { name: 'Spróbuj ponownie', emoji: '🔄', code: 'RETRY', weight: 0.05, isRetry: true },
 ];
+
+// normalize weights just in case
+(function normalizeWeights(){
+  const total = PRIZES.reduce((s,p)=>s+(p.weight||0),0);
+  if (total<=0) return;
+  PRIZES.forEach(p=>p.weight = (p.weight||0)/total);
+})();
 
 // === DOM ELEMENTS ===
 const spinBtn = document.getElementById('spin');
@@ -807,6 +815,17 @@ let isSpinning = false;
 let currentRotation = 0;
 let history = [];
 let lastSpinAt = 0;
+
+// pick prize by weight
+function pickPrizeIndex() {
+  const r = Math.random();
+  let acc = 0;
+  for (let i = 0; i < PRIZES.length; i++) {
+    acc += PRIZES[i].weight;
+    if (r <= acc) return i;
+  }
+  return PRIZES.length - 1;
+}
 
 // === INITIALIZATION ===
 function init() {
@@ -845,15 +864,15 @@ function drawWheel() {
     ctx.closePath();
     ctx.fill();
 
-    // draw emoji
+    // draw emoji and label
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(startAngle + sliceAngle / 2);
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(prize.emoji, radius - 40, 0);
+    ctx.fillText(prize.emoji + ' ' + prize.name, radius - 20, 0);
     ctx.restore();
   });
 }
@@ -878,8 +897,8 @@ function spin() {
   isSpinning = true;
   spinBtn.disabled = true;
 
-  // pick prize
-  const index = Math.floor(Math.random() * PRIZES.length);
+  // pick prize using weights
+  const index = pickPrizeIndex();
   const targetAngle = (index * (360 / PRIZES.length)) + (360 / PRIZES.length) / 2;
   const spins = 6; // full rotations
   const finalRotation = spins * 360 + (360 - targetAngle) + (Math.random() * (360 / PRIZES.length) - (360 / PRIZES.length)/2);
@@ -920,6 +939,11 @@ function showResult(prize) {
   const resultText = document.getElementById('resultText');
   const resultCode = document.getElementById('resultCode');
   resultText.textContent = `${prize.emoji} ${prize.name}`;
+
+  // special styling for rare prize
+  if (prize.rare) resultModal.classList.add('mega');
+  else resultModal.classList.remove('mega');
+
   if (prize.code) {
     resultCode.textContent = prize.code;
     resultCode.style.display = 'block';
@@ -933,6 +957,7 @@ function showResult(prize) {
 
 function closeModal() {
   resultModal.classList.remove('show');
+  resultModal.classList.remove('mega');
 }
 
 function copyCode() {
