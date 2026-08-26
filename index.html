@@ -231,6 +231,61 @@ button:disabled{
   background:rgba(255,20,147,.09);
   box-shadow:0 0 11px rgba(255,20,147,.35);
 }
+.share-card{
+  margin-top:14px;
+}
+
+.share-title{
+  font-size:18px;
+  font-weight:1000;
+  text-shadow:0 0 12px var(--pink);
+}
+
+.share-sub{
+  margin:6px 0 12px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+}
+
+.share-progress{
+  width:100%;
+  height:12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#160610;
+  border:1px solid rgba(255,95,189,.3);
+}
+
+.share-progress-bar{
+  width:0%;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#ff1493,#ff8bd2);
+  box-shadow:0 0 12px var(--pink);
+  transition:width .25s ease;
+}
+
+.share-count{
+  margin-top:8px;
+  font-size:13px;
+  font-weight:900;
+  color:#fff;
+}
+
+.share-btn,
+.claim-btn{
+  width:100%;
+  margin:10px 0 0;
+  font-size:14px;
+  padding:12px 14px;
+}
+
+.claim-btn{
+  background:linear-gradient(135deg,#ff5fbd,#a80060);
+}
+
+
 
 .coming{
   border-color:#a83b88;
@@ -581,6 +636,25 @@ FORTUNA
 ♥ ZAKRĘĆ KOŁEM ♥
 </button>
 
+<!-- DODATKOWY LOS ZA UDOSTĘPNIENIA -->
+<div class="card share-card">
+  <div class="share-title">🎁 DODATKOWY LOS</div>
+  <div class="share-sub">
+    Udostępnij koło 15 osobom i odbierz <b>+1 dodatkowy los</b> ♥
+  </div>
+  <div class="share-progress">
+    <div id="shareProgress" class="share-progress-bar"></div>
+  </div>
+  <div id="shareCount" class="share-count">0 / 15 udostępnień</div>
+  <button id="shareBtn" type="button" class="share-btn">
+    📤 UDOSTĘPNIJ NA TELEGRAMIE
+  </button>
+  <button id="claimBonusBtn" type="button" class="claim-btn" disabled>
+    🎁 ODBIERZ +1 LOS
+  </button>
+  <div id="shareNote" class="share-note"></div>
+</div>
+
 <!-- TWOJE LINKI -->
 
 <a
@@ -636,8 +710,13 @@ Jeszcze nikt nie wygrał
 <div class="card stats">
 
 <div class="stat">
-<b id="spinCount">0</b>
-losowań
+<b id="onlineCount">113</b>
+online
+</div>
+
+<div class="stat">
+<b id="globalSpinCount">0</b>
+zakręceń
 </div>
 
 <div class="stat">
@@ -712,6 +791,14 @@ var ctx=canvas.getContext("2d");
 var btn=document.getElementById("spin");
 var result=document.getElementById("result");
 var timer=document.getElementById("timer");
+
+var shareBtn=document.getElementById("shareBtn");
+var claimBonusBtn=document.getElementById("claimBonusBtn");
+var shareCountEl=document.getElementById("shareCount");
+var shareProgress=document.getElementById("shareProgress");
+var shareNote=document.getElementById("shareNote");
+var onlineCountEl=document.getElementById("onlineCount");
+var globalSpinCountEl=document.getElementById("globalSpinCount");
 
 var modal=document.getElementById("modal");
 var box=modal.querySelector(".modal-box");
@@ -797,7 +884,7 @@ var part=TAU/prizes.length;
 var rotation=0;
 var spinning=false;
 
-var KEY="julcia_kolo_fortuny_v5";
+var KEY="julcia_kolo_fortuny_v6";
 var DAY=86400000;
 
 /* PAMIĘĆ */
@@ -808,7 +895,7 @@ try{
 
 return JSON.parse(
 localStorage.getItem(KEY) ||
-'{"last":0,"spins":0,"wins":0,"history":[],"best":"—"}'
+'{"last":0,"spins":0,"wins":0,"history":[],"best":"—","shareCount":0,"bonusSpins":0,"bonusClaimed":false}'
 );
 
 }catch(e){
@@ -818,7 +905,10 @@ last:0,
 spins:0,
 wins:0,
 history:[],
-best:"—"
+best:"—",
+shareCount:0,
+bonusSpins:0,
+bonusClaimed:false
 };
 
 }
@@ -942,11 +1032,206 @@ return ((a%TAU)+TAU)%TAU;
 
 }
 
+/* DODATKOWY LOS ZA UDOSTĘPNIENIA */
+
+var SHARE_TARGET=15;
+var SHARE_URL="https://t.me/share/url?url=https://t.me/KoloFortunyBot&text=Darmowe%20ko%C5%82o%20fortuny%20z%20pakietami%2018%2B%20dla%20ka%C5%BCdego%20co%2024h%F0%9F%91%86%E2%99%A5%EF%B8%8F";
+
+/* PUBLICZNE LICZNIKI */
+var PUBLIC_STATS_KEY="julcia_public_stats_v1";
+var ONLINE_MIN=113;
+var ONLINE_MAX=743;
+var SPINS_PER_DAY=200;
+
+function getPublicStats(){
+  var now=Date.now();
+  var s;
+
+  try{
+    s=JSON.parse(localStorage.getItem(PUBLIC_STATS_KEY)||"null");
+  }catch(e){
+    s=null;
+  }
+
+  if(!s){
+    s={
+      dayStart:now,
+      spinsBase:Math.floor(Math.random()*6000)+12000,
+      online:Math.floor(Math.random()*(ONLINE_MAX-ONLINE_MIN+1))+ONLINE_MIN,
+      lastUpdate:now
+    };
+  }
+
+  /* Około 200 zakręceń dziennie, rozłożone naturalnie w czasie. */
+  var elapsed=Math.max(0,now-s.dayStart);
+  var dayFraction=Math.min(elapsed/86400000,1);
+  var targetToday=Math.floor(dayFraction*SPINS_PER_DAY);
+
+  /* Losowe odchylenie, żeby licznik nie był idealnie liniowy. */
+  var natural=Math.floor(Math.sin(now/47000)*3 + Math.random()*3);
+
+  if(elapsed>=86400000){
+    s.dayStart=now;
+    s.spinsBase=s.spinsBase+SPINS_PER_DAY;
+    targetToday=0;
+  }
+
+  /* Online zmienia się powoli, zamiast skakać co sekundę. */
+  if(now-s.lastUpdate>45000){
+    s.online+=Math.floor(Math.random()*21)-10;
+    s.lastUpdate=now;
+  }
+
+  s.online=Math.max(ONLINE_MIN,Math.min(ONLINE_MAX,s.online));
+
+  var publicSpins=s.spinsBase+targetToday+natural;
+
+  try{
+    localStorage.setItem(PUBLIC_STATS_KEY,JSON.stringify(s));
+  }catch(e){}
+
+  return {
+    online:s.online,
+    spins:publicSpins
+  };
+}
+
+function animateNumber(el, from, to, duration){
+  if(from===to){
+    el.textContent=String(to);
+    return;
+  }
+
+  var start=performance.now();
+
+  function frame(now){
+    var progress=Math.min((now-start)/duration,1);
+    var eased=1-Math.pow(1-progress,3);
+    var value=Math.round(from+(to-from)*eased);
+
+    el.textContent=value.toLocaleString("pl-PL");
+
+    if(progress<1){
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+var displayedOnline=null;
+var targetOnline=null;
+var nextOnlineChange=0;
+
+function updatePublicStats(){
+  var p=getPublicStats();
+  var now=Date.now();
+
+  /*
+   * Liczba online dostaje nowy cel co 12–18 sekund.
+   * Zmiana jest płynnie animowana zamiast skakać.
+   */
+  if(displayedOnline===null){
+    displayedOnline=p.online;
+    targetOnline=p.online;
+    onlineCountEl.textContent=p.online.toLocaleString("pl-PL");
+    nextOnlineChange=now+12000+Math.random()*6000;
+  }
+
+  if(now>=nextOnlineChange){
+    var current=targetOnline;
+    var change=Math.floor(Math.random()*61)-30;
+    targetOnline=Math.max(113,Math.min(743,current+change));
+
+    animateNumber(
+      onlineCountEl,
+      current,
+      targetOnline,
+      1800
+    );
+
+    displayedOnline=targetOnline;
+    nextOnlineChange=now+12000+Math.random()*6000;
+  }
+
+  globalSpinCountEl.textContent=p.spins.toLocaleString("pl-PL");
+}
+
+function updateShareUI(){
+  var s=getState();
+  var count=Math.min(Number(s.shareCount)||0,SHARE_TARGET);
+  var pct=(count/SHARE_TARGET)*100;
+
+  shareCountEl.textContent=count+" / "+SHARE_TARGET+" osób";
+  shareProgress.style.width=pct+"%";
+
+  shareBtn.disabled=count>=SHARE_TARGET || s.bonusClaimed;
+  shareBtn.textContent=count>=SHARE_TARGET
+    ? "✓ 15 UDOSTĘPNIEŃ GOTOWE"
+    : "📤 UDOSTĘPNIJ NA TELEGRAMIE";
+
+  claimBonusBtn.disabled=!(count>=SHARE_TARGET && !s.bonusClaimed);
+
+  if(s.bonusClaimed){
+    claimBonusBtn.textContent="✓ +1 LOS JUŻ ODEBRANY";
+    shareNote.textContent="Bonus został już wykorzystany. ♥";
+  }else if(count>=SHARE_TARGET){
+    shareNote.textContent="Gotowe! Odbierz teraz swój dodatkowy los. 🎁";
+  }else{
+    shareNote.textContent="Uwaga: mini-apka nie może potwierdzić, czy odbiorca faktycznie dostał wiadomość.";
+  }
+}
+
+function openTelegramShare(){
+  if(window.Telegram && Telegram.WebApp && Telegram.WebApp.openTelegramLink){
+    Telegram.WebApp.openTelegramLink(SHARE_URL);
+  }else{
+    window.open(SHARE_URL,"_blank","noopener,noreferrer");
+  }
+}
+
+shareBtn.addEventListener("click",function(){
+  var s=getState();
+
+  if(s.bonusClaimed || s.shareCount>=SHARE_TARGET){
+    updateShareUI();
+    return;
+  }
+
+  /*
+   * Telegram Share URL nie zwraca do mini-apki informacji,
+   * czy wiadomość została faktycznie wysłana.
+   * Dlatego ten licznik oznacza otwarcia procesu udostępniania.
+   */
+  s.shareCount=(Number(s.shareCount)||0)+1;
+  saveState(s);
+  updateShareUI();
+  openTelegramShare();
+});
+
+claimBonusBtn.addEventListener("click",function(){
+  var s=getState();
+
+  if(s.shareCount<SHARE_TARGET || s.bonusClaimed)return;
+
+  s.bonusSpins=(Number(s.bonusSpins)||0)+1;
+  s.bonusClaimed=true;
+  saveState(s);
+
+  claimBonusBtn.textContent="✓ +1 LOS DODANY";
+  shareNote.textContent="Masz dodatkowy los! Możesz zakręcić kołem. 🎁";
+  updateShareUI();
+  updateUI();
+});
+
 /* AKTUALIZACJA INFORMACJI */
 
 function updateUI(){
 
 var s=getState();
+
+updateShareUI();
+updatePublicStats();
 
 var left=DAY-(Date.now()-s.last);
 
@@ -986,10 +1271,12 @@ return `
 
 }
 
-if(!s.last || left<=0){
+if(!s.last || left<=0 || (Number(s.bonusSpins)||0)>0){
 
 btn.disabled=false;
-btn.textContent="♥ ZAKRĘĆ KOŁEM ♥";
+btn.textContent=(Number(s.bonusSpins)||0)>0
+  ? "🎁 ZAKRĘĆ DODATKOWYM LOSEM"
+  : "♥ ZAKRĘĆ KOŁEM ♥";
 
 timer.className="card timer";
 
@@ -1278,7 +1565,10 @@ if(spinning)return;
 
 var s=getState();
 
+var usingBonus=(Number(s.bonusSpins)||0)>0;
+
 if(
+!usingBonus &&
 s.last &&
 Date.now()-s.last<DAY
 ){
@@ -1296,6 +1586,11 @@ btn.disabled=true;
 sound("spin");
 
 var winner=choose();
+
+if(usingBonus){
+  s.bonusSpins=Math.max(0,(Number(s.bonusSpins)||0)-1);
+  saveState(s);
+}
 
 var target=
 winner*part+
@@ -1357,7 +1652,9 @@ var prize=prizes[winner];
 
 var d=new Date();
 
-s.last=Date.now();
+if(!usingBonus){
+  s.last=Date.now();
+}
 
 s.spins++;
 
