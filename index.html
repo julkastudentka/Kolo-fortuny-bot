@@ -591,52 +591,6 @@ button:disabled{
   to{opacity:0}
 }
 
-.scratch-card{
-  overflow:hidden;
-}
-
-.scratch-wrap{
-  position:relative;
-  width:100%;
-  max-width:390px;
-  aspect-ratio:700/360;
-  margin:12px auto;
-  border-radius:16px;
-  overflow:hidden;
-  border:1px solid rgba(255,95,189,.45);
-  background:#0b030c;
-}
-
-.scratch-message{
-  position:absolute;
-  inset:0;
-  z-index:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  text-align:center;
-  font-size:17px;
-  line-height:1.45;
-  font-weight:900;
-  color:#fff;
-  text-shadow:0 0 12px var(--pink);
-}
-
-#scratchCanvas{
-  position:absolute;
-  inset:0;
-  z-index:2;
-  width:100%;
-  height:100%;
-  touch-action:none;
-  cursor:grab;
-}
-
-#scratchCanvas:active{
-  cursor:grabbing;
-}
-
 /* DUŻY LICZNIK KOŁA */
 .big-wheel-countdown{
   margin:18px 0 22px;
@@ -680,70 +634,6 @@ button:disabled{
 .countdown-sub{
   font-size:12px;
   color:#dba9c8;
-}
-
-.scratch-card{
-  border:1px solid rgba(255,95,189,.55);
-  background:
-    radial-gradient(circle at 50% 0%,rgba(255,95,189,.18),transparent 45%),
-    linear-gradient(145deg,#230719,#09030c);
-}
-
-.scratch-wrap{
-  position:relative;
-  width:100%;
-  max-width:390px;
-  aspect-ratio:700/360;
-  margin:16px auto;
-  border-radius:22px;
-  overflow:hidden;
-  border:2px solid rgba(255,95,189,.62);
-  background:
-    radial-gradient(circle at 50% 45%,rgba(255,20,147,.20),transparent 48%),
-    #08030a;
-  box-shadow:
-    0 0 8px rgba(255,20,147,.65),
-    0 0 28px rgba(255,20,147,.28),
-    inset 0 0 25px rgba(0,0,0,.8);
-}
-
-.scratch-wrap:after{
-  content:"";
-  position:absolute;
-  inset:7px;
-  z-index:3;
-  pointer-events:none;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-}
-
-.scratch-message{
-  font-size:clamp(16px,4vw,20px);
-  text-shadow:
-    0 0 5px #fff,
-    0 0 15px var(--pink),
-    0 0 30px var(--pink);
-  padding:30px;
-}
-
-.scratch-message:after{
-  content:"♥";
-  display:block;
-  margin-top:8px;
-  font-size:25px;
-  color:#ff8bd2;
-  text-shadow:0 0 15px #ff1493;
-}
-
-#scratchCanvas{
-  filter:
-    drop-shadow(0 0 6px rgba(255,20,147,.55))
-    drop-shadow(0 0 18px rgba(255,20,147,.22));
-}
-
-#newScratchBtn{
-  background:
-    linear-gradient(135deg,#ff1493,#c40072 55%,#8a004e);
 }
 
 </style>
@@ -832,25 +722,6 @@ FORTUNA
   <div id="bigWheelSub" class="countdown-sub">Pozostały czas do kolejnego zakręcenia</div>
 </div>
 
-<!-- ZDRAPKA -->
-<div id="zdrapka" class="card scratch-card">
-  <div class="share-title">🎁 ZDRAP I ODKRYJ</div>
-  <div class="share-sub">Zdrap warstwę i odkryj swoje zaproszenie do zakupu pakieciku 😘</div>
-
-  <div class="scratch-wrap">
-    <div id="scratchMessage" class="scratch-message">Zdrap mnie! 💝</div>
-    <canvas id="scratchCanvas" width="700" height="360"></canvas>
-  </div>
-
-  <button id="newScratchBtn" type="button" class="share-btn">
-    ✨ NOWA ZDRAPKA
-  </button>
-
-  <a id="scratchBuyBtn" class="link" href="https://t.me/saskaj?text=Chc%C4%99%20kupi%C4%87%20pakiecik%20%F0%9F%98%98" target="_blank" rel="noopener noreferrer" style="display:none;">
-    💗 PRZEJDŹ DO ZAKUPU
-  </a>
-</div>
-
 <!-- WYNIK -->
 
 <div id="result" class="card result"></div>
@@ -918,11 +789,9 @@ const PRIZES = [
 // === DOM ELEMENTS ===
 const spinBtn = document.getElementById('spin');
 const wheelCanvas = document.getElementById('wheel');
-const scratchCanvas = document.getElementById('scratchCanvas');
 const resultModal = document.getElementById('resultModal');
 const closeModalBtn = document.getElementById('closeModal');
 const copyBtn = document.getElementById('copyBtn');
-const newScratchBtn = document.getElementById('newScratchBtn');
 const greetingDiv = document.getElementById('greeting');
 const historyList = document.getElementById('historyList');
 const totalSpinsSpan = document.getElementById('totalSpins');
@@ -932,24 +801,22 @@ const bestPrizeSpan = document.getElementById('bestPrize');
 const bigWheelCountdown = document.getElementById('bigWheelCountdown');
 const bigWheelTime = document.getElementById('bigWheelTime');
 const timerText = document.getElementById('timerText');
-const scratchMessage = document.getElementById('scratchMessage');
 
 // === STATE ===
 let isSpinning = false;
 let currentRotation = 0;
-let scratchCtx = null;
-let isDrawing = false;
+let history = [];
+let lastSpinAt = 0;
 
 // === INITIALIZATION ===
 function init() {
   loadData();
   drawWheel();
-  initScratch();
   updateUI();
   setupEventListeners();
   updateCountdowns();
   setInterval(updateCountdowns, 1000);
-  
+
   const hour = new Date().getHours();
   if (hour < 12) greetingDiv.textContent = '🌅 Dzień dobry!';
   else if (hour < 18) greetingDiv.textContent = '🌤️ Dobry wieczór!';
@@ -965,9 +832,11 @@ function drawWheel() {
   const colors = ['#ff1493', '#ff5fbd', '#c40072', '#8a004e', '#a80060'];
   const sliceAngle = (Math.PI * 2) / PRIZES.length;
 
+  ctx.clearRect(0,0,wheelCanvas.width,wheelCanvas.height);
+
   PRIZES.forEach((prize, i) => {
-    const startAngle = i * sliceAngle;
-    const endAngle = (i + 1) * sliceAngle;
+    const startAngle = i * sliceAngle - Math.PI / 2;
+    const endAngle = (i + 1) * sliceAngle - Math.PI / 2;
 
     ctx.fillStyle = colors[i % colors.length];
     ctx.beginPath();
@@ -976,11 +845,12 @@ function drawWheel() {
     ctx.closePath();
     ctx.fill();
 
+    // draw emoji
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(startAngle + sliceAngle / 2);
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 18px Arial';
+    ctx.font = 'bold 32px Arial';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(prize.emoji, radius - 40, 0);
@@ -988,298 +858,148 @@ function drawWheel() {
   });
 }
 
-// === SCRATCH CARD ===
-function initScratch() {
-  scratchCtx = scratchCanvas.getContext('2d', { willReadFrequently: true });
-  
-  const dpr = window.devicePixelRatio || 1;
-  scratchCanvas.width = 700 * dpr;
-  scratchCanvas.height = 360 * dpr;
-  scratchCanvas.style.width = '700px';
-  scratchCanvas.style.height = '360px';
-  scratchCtx.scale(dpr, dpr);
-  
-  // Draw gray overlay
-  scratchCtx.fillStyle = '#cccccc';
-  scratchCtx.fillRect(0, 0, 700, 360);
-  
-  // Add scratch instructions
-  scratchCtx.fillStyle = 'rgba(0,0,0,0.3)';
-  scratchCtx.font = 'bold 16px Arial';
-  scratchCtx.textAlign = 'center';
-  scratchCtx.textBaseline = 'middle';
-  scratchCtx.fillText('Zdrap aby odkryć →', 350, 180);
-  
-  scratchCanvas.addEventListener('mousedown', startScratch);
-  scratchCanvas.addEventListener('mousemove', scratchCard);
-  scratchCanvas.addEventListener('mouseup', endScratch);
-  scratchCanvas.addEventListener('touchstart', startScratch);
-  scratchCanvas.addEventListener('touchmove', scratchCard);
-  scratchCanvas.addEventListener('touchend', endScratch);
+function setupEventListeners() {
+  spinBtn.addEventListener('click', onSpinClicked);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('copyBtn').addEventListener('click', copyCode);
 }
 
-function startScratch(e) {
-  isDrawing = true;
-}
-
-function scratchCard(e) {
-  if (!isDrawing) return;
-  
-  e.preventDefault();
-  const rect = scratchCanvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  
-  let x, y;
-  if (e.touches) {
-    x = (e.touches[0].clientX - rect.left) / (rect.width / 700);
-    y = (e.touches[0].clientY - rect.top) / (rect.height / 360);
-  } else {
-    x = (e.clientX - rect.left) / (rect.width / 700);
-    y = (e.clientY - rect.top) / (rect.height / 360);
+function onSpinClicked() {
+  if (isSpinning) return;
+  const now = Date.now();
+  if (now - lastSpinAt < SPIN_COOLDOWN_MS) {
+    alert('Możesz zakręcić ponownie później.');
+    return;
   }
-  
-  scratchCtx.clearRect(x - 20, y - 20, 40, 40);
-  
-  // Check if scratched enough
-  checkScratchComplete();
+  spin();
 }
 
-function endScratch() {
-  isDrawing = false;
-}
-
-function checkScratchComplete() {
-  const imageData = scratchCtx.getImageData(0, 0, 700, 360);
-  const data = imageData.data;
-  let transparentPixels = 0;
-  
-  for (let i = 3; i < data.length; i += 4) {
-    if (data[i] < 128) transparentPixels++;
-  }
-  
-  const threshold = (data.length / 4) * 0.3;
-  if (transparentPixels > threshold) {
-    showScratchReward();
-  }
-}
-
-function showScratchReward() {
-  scratchCanvas.style.pointerEvents = 'none';
-  
-  const rewards = ['🎁 Gratis próbka', '💝 Zniżka 10%', '🎀 Bonus punkt', '✨ Voucher'];
-  const reward = rewards[Math.floor(Math.random() * rewards.length)];
-  
-  const scratchBuyBtn = document.getElementById('scratchBuyBtn');
-  scratchBuyBtn.style.display = 'block';
-  scratchMessage.textContent = `✨ ${reward} ✨`;
-}
-
-// === SPIN LOGIC ===
 function spin() {
-  if (isSpinning || !canSpin()) return;
-
   isSpinning = true;
   spinBtn.disabled = true;
 
-  const extraRotation = Math.random() * 360;
-  const fullRotations = 5 + Math.random() * 3;
-  const targetRotation = currentRotation + fullRotations * 360 + extraRotation;
+  // pick prize
+  const index = Math.floor(Math.random() * PRIZES.length);
+  const targetAngle = (index * (360 / PRIZES.length)) + (360 / PRIZES.length) / 2;
+  const spins = 6; // full rotations
+  const finalRotation = spins * 360 + (360 - targetAngle) + (Math.random() * (360 / PRIZES.length) - (360 / PRIZES.length)/2);
 
-  animateSpin(currentRotation, targetRotation);
-}
+  const start = performance.now();
+  const duration = 4200;
+  const initial = currentRotation % 360;
 
-function animateSpin(from, to) {
-  const duration = 5000;
-  const startTime = Date.now();
-
-  function animate() {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const easeProgress = 1 - Math.pow(1 - progress, 3);
-
-    currentRotation = from + (to - from) * easeProgress;
-    wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      onSpinComplete(to);
-    }
+  function animate(t) {
+    const elapsed = t - start;
+    const progress = Math.min(1, elapsed / duration);
+    // ease out
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const rot = initial + (finalRotation - initial) * eased;
+    wheelCanvas.style.transform = `rotate(${rot}deg)`;
+    if (progress < 1) requestAnimationFrame(animate);
+    else finishSpin(index);
   }
-
-  animate();
+  requestAnimationFrame(animate);
 }
 
-function onSpinComplete(finalRotation) {
+function finishSpin(index) {
   isSpinning = false;
-  const normalizedRotation = finalRotation % 360;
-  const pointerDegrees = (360 - normalizedRotation + 90) % 360;
-  const segmentIndex = Math.floor(pointerDegrees / (360 / PRIZES.length)) % PRIZES.length;
-  const winningPrize = PRIZES[segmentIndex];
+  spinBtn.disabled = false;
+  // store rotation
+  const style = wheelCanvas.style.transform;
+  const match = /rotate\(([-0-9.]+)deg\)/.exec(style);
+  currentRotation = match ? parseFloat(match[1]) : 0;
 
-  if (winningPrize.isRetry) {
-    showRetryResult();
-  } else {
-    updateLastSpinTime();
-    showResult(winningPrize);
-  }
-
+  const prize = PRIZES[index];
+  lastSpinAt = Date.now();
+  saveData(prize);
+  showResult(prize);
   updateUI();
 }
 
-// === RESULTS ===
 function showResult(prize) {
   const resultText = document.getElementById('resultText');
   const resultCode = document.getElementById('resultCode');
-  
-  resultText.innerHTML = `<b>${prize.name}</b><br><span style="font-size:12px">Twój kod promocyjny:</span>`;
-  resultCode.textContent = prize.code;
-  resultCode.style.display = 'block';
-  copyBtn.style.display = 'block';
-  
+  resultText.textContent = `${prize.emoji} ${prize.name}`;
+  if (prize.code) {
+    resultCode.textContent = prize.code;
+    resultCode.style.display = 'block';
+    copyBtn.style.display = 'block';
+  } else {
+    resultCode.style.display = 'none';
+    copyBtn.style.display = 'none';
+  }
   resultModal.classList.add('show');
-  
-  copyBtn.onclick = () => {
-    navigator.clipboard.writeText(prize.code);
-    copyBtn.textContent = '✓ SKOPIOWANE';
+}
+
+function closeModal() {
+  resultModal.classList.remove('show');
+}
+
+function copyCode() {
+  const codeEl = document.getElementById('resultCode');
+  if (!codeEl || !codeEl.textContent) return;
+  navigator.clipboard?.writeText(codeEl.textContent).then(() => {
+    copyBtn.textContent = '✔ SKOPIOWANO';
+    copyBtn.classList.add('copied');
     setTimeout(() => {
       copyBtn.textContent = '📋 SKOPIUJ KOD';
-    }, 2000);
-  };
-
-  for (let i = 0; i < 30; i++) createConfetti();
-  createFlash();
+      copyBtn.classList.remove('copied');
+    }, 1800);
+  }).catch(() => {
+    alert('Kopiowanie nie powiodło się.');
+  });
 }
 
-function showRetryResult() {
-  const resultText = document.getElementById('resultText');
-  const resultCode = document.getElementById('resultCode');
-  
-  resultText.innerHTML = '<b>🔄 Spróbuj ponownie!</b><br><span style="font-size:12px">Nieszczęśliwie! Powodzenia następnym razem!</span>';
-  resultCode.style.display = 'none';
-  copyBtn.style.display = 'none';
-  
-  resultModal.classList.add('show');
-
-  for (let i = 0; i < 15; i++) createConfetti();
-  createFlash();
+// === STORAGE / UI ===
+function loadData() {
+  try {
+    const raw = localStorage.getItem('wheel_state');
+    if (raw) {
+      const data = JSON.parse(raw);
+      history = data.history || [];
+      lastSpinAt = data.lastSpinAt || 0;
+    }
+  } catch(e) { console.warn(e); }
 }
 
-function createConfetti() {
-  const confetti = document.createElement('div');
-  confetti.className = 'confetti';
-  confetti.textContent = ['🎉', '✨', '💝', '🎁'][Math.floor(Math.random() * 4)];
-  
-  const x = Math.random() * window.innerWidth;
-  const y = Math.random() * window.innerHeight / 2;
-  
-  confetti.style.left = x + 'px';
-  confetti.style.top = y + 'px';
-  confetti.style.setProperty('--x', (Math.random() - 0.5) * 200 + 'px');
-  confetti.style.setProperty('--y', -(Math.random() * 300 + 200) + 'px');
-  
-  document.body.appendChild(confetti);
-  setTimeout(() => confetti.remove(), 1200);
+function saveData(prize) {
+  const entry = { time: Date.now(), prize: prize.name, code: prize.code || null };
+  history.unshift(entry);
+  history = history.slice(0, 20);
+  const data = { history, lastSpinAt };
+  localStorage.setItem('wheel_state', JSON.stringify(data));
 }
 
-function createFlash() {
-  const flash = document.createElement('div');
-  flash.className = 'flash';
-  document.body.appendChild(flash);
-  setTimeout(() => flash.remove(), 500);
-}
-
-// === UI ===
 function updateUI() {
-  const history = JSON.parse(localStorage.getItem('spinHistory')) || [];
-  historyList.innerHTML = history.slice(0, 5).map(h => `
-    <div class="history-item">
-      <span><b>${h.prize}</b></span>
-      <span>${h.time}</span>
-    </div>
-  `).join('') || '<p style="color:#d7a5c7;">Brak historii</p>';
+  // history list
+  historyList.innerHTML = '';
+  history.slice(0,5).forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = `<b>${new Date(h.time).toLocaleTimeString()}</b><span>${h.prize}${h.code ? ' • ' + h.code : ''}</span>`;
+    historyList.appendChild(div);
+  });
 
-  checkSpinCooldown();
-}
-
-// === COOLDOWN ===
-function canSpin() {
-  const lastSpinTime = localStorage.getItem('lastSpinTime');
-  if (!lastSpinTime) return true;
-  return (Date.now() - parseInt(lastSpinTime)) >= SPIN_COOLDOWN_MS;
-}
-
-function updateLastSpinTime() {
-  localStorage.setItem('lastSpinTime', Date.now().toString());
-  
-  const spinData = {
-    prize: PRIZES[Math.floor(Math.random() * PRIZES.length)].name,
-    code: 'CODE',
-    time: new Date().toLocaleTimeString('pl-PL'),
-  };
-  
-  let history = JSON.parse(localStorage.getItem('spinHistory')) || [];
-  history.unshift(spinData);
-  localStorage.setItem('spinHistory', JSON.stringify(history.slice(0, 5)));
-}
-
-function checkSpinCooldown() {
-  const lastSpinTime = localStorage.getItem('lastSpinTime');
-  
-  if (!lastSpinTime || canSpin()) {
-    spinBtn.disabled = false;
-    spinBtn.textContent = '♥ ZAKRĘĆ KOŁEM ♥';
-    bigWheelCountdown.style.display = 'none';
-    return;
-  }
-
-  spinBtn.disabled = true;
-  bigWheelCountdown.style.display = 'block';
+  totalSpinsSpan.textContent = history.length;
+  const wins = history.filter(h => !h.prize.toLowerCase().includes('spróbuj')).length;
+  totalWinsSpan.textContent = wins;
+  winRateSpan.textContent = history.length ? Math.round((wins / history.length) * 100) + '%' : '0%';
+  bestPrizeSpan.textContent = history.length ? history[0].prize : '[...]';
 }
 
 function updateCountdowns() {
-  const lastSpinTime = localStorage.getItem('lastSpinTime');
-  
-  if (!lastSpinTime || canSpin()) {
-    bigWheelCountdown.style.display = 'none';
-    return;
-  }
-
-  const timeRemaining = SPIN_COOLDOWN_MS - (Date.now() - parseInt(lastSpinTime));
-
-  if (timeRemaining <= 0) {
-    spinBtn.disabled = false;
-    bigWheelCountdown.style.display = 'none';
-    return;
-  }
-
-  const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-  const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-  const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  bigWheelTime.textContent = timeString;
-  timerText.textContent = timeString;
+  const now = Date.now();
+  const remaining = Math.max(0, SPIN_COOLDOWN_MS - (now - lastSpinAt));
+  const h = Math.floor(remaining / 3600000).toString().padStart(2,'0');
+  const m = Math.floor((remaining % 3600000) / 60000).toString().padStart(2,'0');
+  const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2,'0');
+  bigWheelTime.textContent = `${h}:${m}:${s}`;
+  timerText.textContent = `${h}:${m}:${s}`;
 }
 
-function loadData() {
-  // Initialize if needed
-}
+// init on load
+window.addEventListener('load', init);
 
-// === EVENT LISTENERS ===
-function setupEventListeners() {
-  spinBtn.addEventListener('click', spin);
-  closeModalBtn.addEventListener('click', () => {
-    resultModal.classList.remove('show');
-  });
-  newScratchBtn.addEventListener('click', () => {
-    initScratch();
-    scratchMessage.textContent = 'Zdrap mnie! 💝';
-  });
-}
-
-// Start!
-init();
 </script>
 
 </body>
