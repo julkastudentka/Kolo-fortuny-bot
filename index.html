@@ -997,210 +997,380 @@ id="scratchAppLink"
 
 🔥 Dzisiejsza najlepsza wygrana
 
-<strong id="bestPrize">
-[...]
-</strong>
+<strong id="bestPrize">[...]</strong>
 
+</div>
+
+<div class="card stats">
+
+<div class="stat">
+<b id="totalSpins">0</b>
+Losowań dzisiaj
+</div>
+
+<div class="stat">
+<b id="totalWins">0</b>
+Wygranych
+</div>
+
+<div class="stat">
+<b id="winRate">0%</b>
+Skuteczność
+</div>
+
+</div>
+
+<div class="card history">
+
+<h3>📊 Historia (ostatnie 5)</h3>
+
+<div id="historyList"></div>
+
+</div>
+
+<div class="note">
+Koło Fortuny © 2024 Julcia ♥ | Powodzenia w losowaniu! ✨
 </div>
 
 </div>
 </main>
 
 <div id="resultModal" class="modal">
-  <div class="modal-box">
-    <div id="mega">✨</div>
-    <div class="modal-title" id="resultTitle">GRATULACJE! 🎉</div>
-    <div class="modal-sub" id="resultMessage">Wygrana</div>
-    <button type="button" class="close" onclick="closeModal()">OK</button>
-  </div>
+<div class="modal-box">
+<div id="mega">🎉</div>
+<div class="modal-title">GRATULACJE!</div>
+<div class="modal-sub" id="resultText"></div>
+<div id="resultCode" class="code" style="display:none;"></div>
+<button id="copyBtn" class="copy" style="display:none;">📋 SKOPIUJ KOD</button>
+<div id="resultTimer" class="timer">
+  <span>Następne losowanie za:</span>
+  <strong id="timerText">24:00:00</strong>
+</div>
+<button id="closeModal" class="close">ZAMKNIJ</button>
+</div>
 </div>
 
 <script>
-// Prizes list - customize these!
-const prizes = [
-  '10% zniżki',
-  'Darmowa próbka',
-  '20% zniżki',
-  'Losuj ponownie',
-  '30% zniżki',
-  'Specjalny kod',
-  '15% zniżki',
-  'Bonus produkt'
+// === USTAWIENIA ===
+const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 godziny
+const PRIZES = [
+  { name: '🎁 Opakowanie PREMIUM', emoji: '✨', code: 'PREMIUM24' },
+  { name: '💝 Kod zniżkowy -20%', emoji: '💝', code: 'SALE20' },
+  { name: '🌸 Gratis próbka', emoji: '🌸', code: 'SAMPLE' },
+  { name: '🎀 Zestaw startowy', emoji: '🎀', code: 'STARTER' },
+  { name: '💎 Diamentowy pakiet', emoji: '💎', code: 'DIAMOND' },
+  { name: '🌟 Kod VIP', emoji: '🌟', code: 'VIP123' },
 ];
 
-// Wheel state
+// === DOM ELEMENTS ===
+const spinBtn = document.getElementById('spin');
+const wheelCanvas = document.getElementById('wheel');
+const resultDiv = document.getElementById('result');
+const resultModal = document.getElementById('resultModal');
+const closeModalBtn = document.getElementById('closeModal');
+const copyBtn = document.getElementById('copyBtn');
+const greetingDiv = document.getElementById('greeting');
+const historyList = document.getElementById('historyList');
+const totalSpinsSpan = document.getElementById('totalSpins');
+const totalWinsSpan = document.getElementById('totalWins');
+const winRateSpan = document.getElementById('winRate');
+const bestPrizeSpan = document.getElementById('bestPrize');
+const bigWheelCountdown = document.getElementById('bigWheelCountdown');
+const bigWheelTime = document.getElementById('bigWheelTime');
+const bigWheelSub = document.getElementById('bigWheelSub');
+const timerText = document.getElementById('timerText');
+
+// === STATE ===
 let isSpinning = false;
-let rotation = 0;
+let currentRotation = 0;
+let wheelRotationPerSpin = 0;
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+// === INITIALIZATION ===
+function init() {
+  loadData();
   drawWheel();
-  document.getElementById('spin').addEventListener('click', spinWheel);
-  setGreeting();
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
-});
+  updateUI();
+  setupEventListeners();
+  updateCountdowns();
+  setInterval(updateCountdowns, 1000);
+  
+  // Set greeting
+  const hour = new Date().getHours();
+  if (hour < 12) greetingDiv.textContent = '🌅 Dzień dobry!';
+  else if (hour < 18) greetingDiv.textContent = '🌤️ Dobry wieczór!';
+  else greetingDiv.textContent = '🌙 Dobrej nocy!';
+}
 
-// Draw the wheel
+// === WHEEL DRAWING ===
 function drawWheel() {
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const radius = 350;
-  
-  const sliceAngle = (Math.PI * 2) / prizes.length;
-  
-  prizes.forEach((prize, index) => {
-    const startAngle = index * sliceAngle + rotation;
-    const endAngle = startAngle + sliceAngle;
-    
-    // Draw slice background
+  const ctx = wheelCanvas.getContext('2d');
+  const centerX = wheelCanvas.width / 2;
+  const centerY = wheelCanvas.height / 2;
+  const radius = wheelCanvas.width / 2 - 20;
+
+  // Colors for wheel segments
+  const colors = ['#ff1493', '#ff5fbd', '#c40072', '#8a004e', '#ff8bd2', '#a80060'];
+
+  const sliceAngle = (Math.PI * 2) / PRIZES.length;
+
+  PRIZES.forEach((prize, i) => {
+    const startAngle = i * sliceAngle;
+    const endAngle = (i + 1) * sliceAngle;
+
+    // Draw segment
+    ctx.fillStyle = colors[i % colors.length];
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, startAngle, endAngle);
     ctx.closePath();
-    ctx.fillStyle = index % 2 === 0 ? '#ff1493' : '#ff5fbd';
     ctx.fill();
-    
-    // Draw slice border
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
+
     // Draw text
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(startAngle + sliceAngle / 2);
-    ctx.textAlign = 'right';
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText(prize, radius - 40, 10);
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(prize.emoji, radius - 40, 0);
     ctx.restore();
   });
 }
 
-// Spin the wheel
-function spinWheel() {
-  if (isSpinning) return;
-  
+// === SPIN LOGIC ===
+function spin() {
+  if (isSpinning || !canSpin()) {
+    return;
+  }
+
   isSpinning = true;
-  document.getElementById('spin').disabled = true;
-  
-  const spins = 5 + Math.random() * 5;
-  const randomDegree = Math.random() * 360;
-  const totalRotation = spins * 360 + randomDegree;
-  
-  let currentRotation = 0;
-  const duration = 3000; // 3 seconds
+  spinBtn.disabled = true;
+
+  // Random spin: 5-8 full rotations
+  const extraRotation = Math.random() * 360;
+  const fullRotations = 5 + Math.random() * 3;
+  const targetRotation = currentRotation + fullRotations * 360 + extraRotation;
+
+  // Animate spin
+  animateSpin(currentRotation, targetRotation);
+}
+
+function animateSpin(from, to) {
+  const duration = 5000; // 5 seconds
   const startTime = Date.now();
-  
-  const animate = () => {
+
+  function animate() {
     const elapsed = Date.now() - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
-    // Ease out cubic
+
+    // Easing function (cubic easeOut)
     const easeProgress = 1 - Math.pow(1 - progress, 3);
-    currentRotation = totalRotation * easeProgress;
-    
-    rotation = (currentRotation * Math.PI / 180) % (Math.PI * 2);
-    
-    const canvas = document.getElementById('wheel');
-    canvas.style.transform = `rotate(${currentRotation}deg)`;
-    
+
+    currentRotation = from + (to - from) * easeProgress;
+    wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      // Determine winner
-      const winnerIndex = Math.floor((prizes.length - (randomDegree / 360) * prizes.length) % prizes.length);
-      showResult(prizes[winnerIndex], winnerIndex);
-      
-      isSpinning = false;
-      document.getElementById('spin').disabled = false;
+      onSpinComplete(to);
     }
-  };
-  
+  }
+
   animate();
 }
 
-// Show result modal
-function showResult(prize, index) {
-  const isMega = Math.random() < 0.2; // 20% chance for mega prize
-  const modal = document.getElementById('resultModal');
-  const resultTitle = document.getElementById('resultTitle');
-  const resultMessage = document.getElementById('resultMessage');
+function onSpinComplete(finalRotation) {
+  isSpinning = false;
+
+  // Normalize rotation to 0-360
+  const normalizedRotation = finalRotation % 360;
   
-  if (isMega) {
-    modal.classList.add('mega');
-    resultTitle.textContent = '🎊 MEGA WYGRANA! 🎊';
-  } else {
-    modal.classList.remove('mega');
-    resultTitle.textContent = 'GRATULACJE! 🎉';
+  // Calculate which segment is at the top (pointer position)
+  // The pointer is at 0 degrees (top), wheel segments start at -90 degrees
+  const pointerDegrees = (360 - normalizedRotation + 90) % 360;
+  const segmentIndex = Math.floor(pointerDegrees / (360 / PRIZES.length)) % PRIZES.length;
+
+  const winningPrize = PRIZES[segmentIndex];
+
+  // Update data
+  const today = new Date().toLocaleDateString('pl-PL');
+  updateLastSpinTime();
+  
+  const spinData = {
+    prize: winningPrize.name,
+    code: winningPrize.code,
+    time: new Date().toLocaleTimeString('pl-PL'),
+  };
+
+  let history = JSON.parse(localStorage.getItem('spinHistory')) || [];
+  history.unshift(spinData);
+  history = history.slice(0, 5);
+  localStorage.setItem('spinHistory', JSON.stringify(history));
+
+  // Show result
+  showResult(winningPrize);
+  updateUI();
+}
+
+// === UI UPDATES ===
+function showResult(prize) {
+  const resultText = document.getElementById('resultText');
+  const resultCode = document.getElementById('resultCode');
+  
+  resultText.innerHTML = `<b>${prize.name}</b><br><span style="font-size:12px">Twój kod promocyjny:</span>`;
+  resultCode.textContent = prize.code;
+  resultCode.style.display = 'block';
+  copyBtn.style.display = 'block';
+  
+  resultModal.classList.add('show');
+  
+  // Copy functionality
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(prize.code);
+    copyBtn.textContent = '✓ SKOPIOWANE';
+    setTimeout(() => {
+      copyBtn.textContent = '📋 SKOPIUJ KOD';
+    }, 2000);
+  };
+
+  // Add confetti
+  for (let i = 0; i < 30; i++) {
+    createConfetti();
   }
-  
-  resultMessage.textContent = prize;
-  modal.classList.add('show');
-  
-  // Confetti
-  createConfetti();
+
+  // Flash effect
+  createFlash();
 }
 
-function closeModal() {
-  document.getElementById('resultModal').classList.remove('show');
-}
-
-// Create confetti
 function createConfetti() {
-  const colors = ['♥', '💗', '✨'];
-  for (let i = 0; i < 20; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.textContent = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.left = Math.random() * 100 + 'vw';
-    confetti.style.top = '-30px';
-    confetti.style.setProperty('--x', (Math.random() - 0.5) * 200 + 'px');
-    confetti.style.setProperty('--y', Math.random() * 300 + 'px');
-    document.body.appendChild(confetti);
-    
-    setTimeout(() => confetti.remove(), 1150);
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  confetti.textContent = ['🎉', '✨', '💝', '🎁', '🌸'][Math.floor(Math.random() * 5)];
+  
+  const x = Math.random() * window.innerWidth;
+  const y = Math.random() * window.innerHeight / 2;
+  
+  confetti.style.left = x + 'px';
+  confetti.style.top = y + 'px';
+  confetti.style.setProperty('--x', (Math.random() - 0.5) * 200 + 'px');
+  confetti.style.setProperty('--y', -(Math.random() * 300 + 200) + 'px');
+  
+  document.body.appendChild(confetti);
+  
+  setTimeout(() => confetti.remove(), 1200);
+}
+
+function createFlash() {
+  const flash = document.createElement('div');
+  flash.className = 'flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+}
+
+function updateUI() {
+  const today = new Date().toLocaleDateString('pl-PL');
+  const todayData = JSON.parse(localStorage.getItem('todaySpinsData')) || {};
+  const spins = todayData[today] || { count: 0, wins: 0, prizes: [] };
+
+  totalSpinsSpan.textContent = spins.count;
+  totalWinsSpan.textContent = spins.wins;
+  winRateSpan.textContent = spins.count > 0 ? Math.round((spins.wins / spins.count) * 100) + '%' : '0%';
+
+  if (spins.prizes.length > 0) {
+    const lastPrize = spins.prizes[spins.prizes.length - 1];
+    bestPrizeSpan.textContent = lastPrize;
   }
+
+  // Update history
+  const history = JSON.parse(localStorage.getItem('spinHistory')) || [];
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item">
+      <span><b>${h.prize}</b></span>
+      <span>${h.time}</span>
+    </div>
+  `).join('');
+
+  checkSpinCooldown();
 }
 
-// Greeting based on time
-function setGreeting() {
-  const hour = new Date().getHours();
-  let greeting = '';
-  
-  if (hour < 12) greeting = 'Dzień dobry! ☀️';
-  else if (hour < 18) greeting = 'Popołudnie! 😊';
-  else greeting = 'Dobry wieczór! 🌙';
-  
-  document.getElementById('greeting').textContent = greeting;
+// === COOLDOWN LOGIC ===
+function canSpin() {
+  const lastSpinTime = localStorage.getItem('lastSpinTime');
+  if (!lastSpinTime) return true;
+
+  const now = Date.now();
+  const lastSpin = parseInt(lastSpinTime);
+  const timePassed = now - lastSpin;
+
+  return timePassed >= SPIN_COOLDOWN_MS;
 }
 
-// Update countdown timer
-function updateCountdown() {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+function updateLastSpinTime() {
+  localStorage.setItem('lastSpinTime', Date.now().toString());
+}
+
+function checkSpinCooldown() {
+  const lastSpinTime = localStorage.getItem('lastSpinTime');
   
-  const diff = tomorrow - now;
-  const hours = Math.floor(diff / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
+  if (!lastSpinTime || canSpin()) {
+    spinBtn.disabled = false;
+    spinBtn.textContent = '♥ ZAKRĘĆ KOŁEM ♥';
+    bigWheelCountdown.style.display = 'none';
+    return;
+  }
+
+  spinBtn.disabled = true;
+  bigWheelCountdown.style.display = 'block';
+}
+
+function updateCountdowns() {
+  const lastSpinTime = localStorage.getItem('lastSpinTime');
   
+  if (!lastSpinTime || canSpin()) {
+    bigWheelCountdown.style.display = 'none';
+    return;
+  }
+
+  const now = Date.now();
+  const lastSpin = parseInt(lastSpinTime);
+  const timeRemaining = SPIN_COOLDOWN_MS - (now - lastSpin);
+
+  if (timeRemaining <= 0) {
+    spinBtn.disabled = false;
+    bigWheelCountdown.style.display = 'none';
+    return;
+  }
+
+  const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+  const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
   const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  document.getElementById('bigWheelTime').textContent = timeString;
+  bigWheelTime.textContent = timeString;
+  timerText.textContent = timeString;
 }
 
-// Close modal when clicking outside
-document.addEventListener('click', (e) => {
-  const modal = document.getElementById('resultModal');
-  if (e.target === modal) {
-    closeModal();
+// === DATA MANAGEMENT ===
+function loadData() {
+  const today = new Date().toLocaleDateString('pl-PL');
+  const todayData = JSON.parse(localStorage.getItem('todaySpinsData')) || {};
+  
+  if (!todayData[today]) {
+    todayData[today] = { count: 0, wins: 0, prizes: [] };
   }
-});
+}
+
+// === EVENT LISTENERS ===
+function setupEventListeners() {
+  spinBtn.addEventListener('click', spin);
+  closeModalBtn.addEventListener('click', () => {
+    resultModal.classList.remove('show');
+  });
+}
+
+// Start!
+init();
 </script>
 
 </body>
